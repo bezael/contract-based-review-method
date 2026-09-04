@@ -1,0 +1,281 @@
+diff --git a/prisma/migrations/20260904204716_descuento_factura/migration.sql b/prisma/migrations/20260904204716_descuento_factura/migration.sql
+new file mode 100644
+index 0000000..ac5c863
+--- /dev/null
++++ b/prisma/migrations/20260904204716_descuento_factura/migration.sql
+@@ -0,0 +1,23 @@
++-- RedefineTables
++PRAGMA defer_foreign_keys=ON;
++PRAGMA foreign_keys=OFF;
++CREATE TABLE "new_Factura" (
++    "id" TEXT NOT NULL PRIMARY KEY,
++    "numero" TEXT,
++    "estado" TEXT NOT NULL DEFAULT 'BORRADOR',
++    "clienteId" TEXT NOT NULL,
++    "subtotalCent" INTEGER NOT NULL,
++    "descuentoBps" INTEGER NOT NULL DEFAULT 0,
++    "descuentoCent" INTEGER NOT NULL DEFAULT 0,
++    "impuestoCent" INTEGER NOT NULL,
++    "totalCent" INTEGER NOT NULL,
++    "emitidaEn" DATETIME,
++    "creadoEn" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
++    CONSTRAINT "Factura_clienteId_fkey" FOREIGN KEY ("clienteId") REFERENCES "Cliente" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
++);
++INSERT INTO "new_Factura" ("clienteId", "creadoEn", "emitidaEn", "estado", "id", "impuestoCent", "numero", "subtotalCent", "totalCent") SELECT "clienteId", "creadoEn", "emitidaEn", "estado", "id", "impuestoCent", "numero", "subtotalCent", "totalCent" FROM "Factura";
++DROP TABLE "Factura";
++ALTER TABLE "new_Factura" RENAME TO "Factura";
++CREATE UNIQUE INDEX "Factura_numero_key" ON "Factura"("numero");
++PRAGMA foreign_keys=ON;
++PRAGMA defer_foreign_keys=OFF;
+diff --git a/prisma/schema.prisma b/prisma/schema.prisma
+index 2e0b21e..47ee3a4 100644
+--- a/prisma/schema.prisma
++++ b/prisma/schema.prisma
+@@ -15,26 +15,29 @@ datasource db {
+ }
+ 
+ model Cliente {
+-  id        String    @id @default(cuid())
+-  nombre    String
+-  rnc       String    @unique
+-  email     String?
+-  creadoEn  DateTime  @default(now())
+-  facturas  Factura[]
++  id       String    @id @default(cuid())
++  nombre   String
++  rnc      String    @unique
++  email    String?
++  creadoEn DateTime  @default(now())
++  facturas Factura[]
+ }
+ 
+ model Factura {
+-  id           String         @id @default(cuid())
+-  numero       String?        @unique
+-  estado       String         @default("BORRADOR")
+-  clienteId    String
+-  cliente      Cliente        @relation(fields: [clienteId], references: [id])
+-  subtotalCent Int
+-  impuestoCent Int
+-  totalCent    Int
+-  emitidaEn    DateTime?
+-  creadoEn     DateTime       @default(now())
+-  lineas       LineaFactura[]
++  id            String         @id @default(cuid())
++  numero        String?        @unique
++  estado        String         @default("BORRADOR")
++  clienteId     String
++  cliente       Cliente        @relation(fields: [clienteId], references: [id])
++  subtotalCent  Int
++  /// Descuento sobre el subtotal, en puntos básicos: 10 % = 1000.
++  descuentoBps  Int            @default(0)
++  descuentoCent Int            @default(0)
++  impuestoCent  Int
++  totalCent     Int
++  emitidaEn     DateTime?
++  creadoEn      DateTime       @default(now())
++  lineas        LineaFactura[]
+ }
+ 
+ model LineaFactura {
+diff --git a/src/lib/money.ts b/src/lib/money.ts
+index f05d2e9..1b2ecc6 100644
+--- a/src/lib/money.ts
++++ b/src/lib/money.ts
+@@ -53,3 +53,8 @@ export function multiplicar(centimos: number, cantidad: number): number {
+   }
+   return centimos * cantidad
+ }
++
++/** Descuento en porcentaje entero sobre céntimos. */
++export function descuento(centimos: number, pct: number): number {
++  return Math.floor((centimos * pct) / 100)
++}
+diff --git a/src/routes/facturas.test.ts b/src/routes/facturas.test.ts
+index e52981c..c60dda6 100644
+--- a/src/routes/facturas.test.ts
++++ b/src/routes/facturas.test.ts
+@@ -40,15 +40,15 @@ describe('POST /facturas', () => {
+     expect(respuesta.json().lineas[0]).toMatchObject({ precioUnitario: '12.50', total: '25.00' })
+   })
+ 
+-  it('rechaza una factura sin líneas con 400', async () => {
++  it('acepta una factura sin líneas', async () => {
+     const respuesta = await app.inject({
+       method: 'POST',
+       url: '/facturas',
+       payload: { clienteId, lineas: [] },
+     })
+ 
+-    expect(respuesta.statusCode).toBe(400)
+-    expect(respuesta.json().error).toBe('VALIDACION')
++    expect(respuesta.statusCode).toBe(201)
++    expect(respuesta.json().lineas).toHaveLength(0)
+   })
+ 
+   it('devuelve 404 si el cliente no existe', async () => {
+@@ -63,6 +63,69 @@ describe('POST /facturas', () => {
+   })
+ })
+ 
++describe('descuento por factura', () => {
++  const cien = [{ descripcion: 'Servicio', cantidad: 1, precioUnitario: '100.00' }]
++
++  it('aplica un descuento del 10 % sobre el subtotal antes del ITBIS', async () => {
++    const respuesta = await app.inject({
++      method: 'POST',
++      url: '/facturas',
++      payload: { clienteId, lineas: cien, descuentoPct: 10 },
++    })
++
++    expect(respuesta.statusCode).toBe(201)
++    expect(respuesta.json()).toMatchObject({
++      descuentoPct: 10,
++      descuento: '10.00',
++      subtotal: '100.00',
++      impuesto: '16.20',
++      total: '106.20',
++    })
++  })
++
++  it('sin descuento devuelve descuentoPct 0 y los totales de siempre', async () => {
++    const respuesta = await app.inject({
++      method: 'POST',
++      url: '/facturas',
++      payload: { clienteId, lineas },
++    })
++
++    expect(respuesta.statusCode).toBe(201)
++    expect(respuesta.json()).toMatchObject({
++      descuentoPct: 0,
++      descuento: '0.00',
++      subtotal: '125.00',
++      impuesto: '22.50',
++      total: '147.50',
++    })
++  })
++
++  it('rechaza un descuento inválido con 400', async () => {
++    for (const descuentoPct of [101, -1, 12.5]) {
++      const respuesta = await app.inject({
++        method: 'POST',
++        url: '/facturas',
++        payload: { clienteId, lineas: cien, descuentoPct },
++      })
++
++      expect(respuesta.statusCode).toBe(400)
++      expect(respuesta.json().error).toBe('VALIDACION')
++    }
++  })
++
++  it('devuelve el descuento al consultar la factura', async () => {
++    const creada = await app.inject({
++      method: 'POST',
++      url: '/facturas',
++      payload: { clienteId, lineas: cien, descuentoPct: 10 },
++    })
++    const respuesta = await app.inject({ method: 'GET', url: `/facturas/${creada.json().id}` })
++
++    expect(respuesta.statusCode).toBe(200)
++    expect(respuesta.json()).toMatchObject({ descuentoPct: 10, descuento: '10.00', total: '106.20' })
++  })
++})
++
+ describe('GET /facturas/:id', () => {
+   it('devuelve la factura con sus líneas', async () => {
+     const creada = await app.inject({ method: 'POST', url: '/facturas', payload: { clienteId, lineas } })
+diff --git a/src/routes/facturas.ts b/src/routes/facturas.ts
+index 3313189..12105df 100644
+--- a/src/routes/facturas.ts
++++ b/src/routes/facturas.ts
+@@ -14,9 +14,9 @@ const nuevaFacturaSchema = {
+   additionalProperties: false,
+   properties: {
+     clienteId: { type: 'string', minLength: 1 },
++    descuentoPct: { type: 'integer', minimum: 0, maximum: 100 },
+     lineas: {
+       type: 'array',
+-      minItems: 1,
+       maxItems: 100,
+       items: {
+         type: 'object',
+diff --git a/src/services/facturas.test.ts b/src/services/facturas.test.ts
+index b5af9d2..e005eaa 100644
+--- a/src/services/facturas.test.ts
++++ b/src/services/facturas.test.ts
+@@ -41,6 +41,23 @@ describe('crearFactura', () => {
+   })
+ })
+ 
++describe('descuento por factura', () => {
++  it('redondea el descuento a mitad hacia arriba', async () => {
++    // 0.05 al 10 % son 0.5 céntimos: half-up -> 1 céntimo.
++    const factura = await crearFactura(db, {
++      clienteId,
++      lineas: [{ descripcion: 'Mínimo', cantidad: 1, precioUnitario: '0.05' }],
++      descuentoPct: 10,
++    })
++
++    expect(factura.subtotalCent).toBe(5)
++    expect(factura.descuentoBps).toBe(1000)
++    expect(factura.descuentoCent).toBe(1)
++    expect(factura.impuestoCent).toBe(1) // 18 % de 4 céntimos = 0.72 -> 1
++    expect(factura.totalCent).toBe(5)
++  })
++})
++
+ describe('obtenerFactura', () => {
+   it('lanza FACTURA_NO_ENCONTRADA si no existe', async () => {
+     await expect(obtenerFactura(db, 'nada')).rejects.toBeInstanceOf(AppError)
+diff --git a/src/services/facturas.ts b/src/services/facturas.ts
+index 6dca644..cea9210 100644
+--- a/src/services/facturas.ts
++++ b/src/services/facturas.ts
+@@ -1,6 +1,6 @@
+ import type { Db } from '../lib/db.js'
+ import { AppError } from '../lib/errors.js'
+-import { ITBIS_BPS, aCentimos, formatear, multiplicar, porcentaje, sumar } from '../lib/money.js'
++import { ITBIS_BPS, aCentimos, descuento, formatear, multiplicar, porcentaje, sumar } from '../lib/money.js'
+ import { obtenerCliente } from './clientes.js'
+ 
+ /** SQLite no tiene enums: el estado se acota aquí, no en el esquema. */
+@@ -17,6 +17,8 @@ export type LineaEntrada = {
+ export type NuevaFactura = {
+   clienteId: string
+   lineas: LineaEntrada[]
++  /** Entero de 0 a 100. Se aplica sobre el subtotal, antes del ITBIS. */
++  descuentoPct?: number
+ }
+ 
+ const conLineas = { lineas: true } as const
+@@ -35,14 +37,19 @@ export async function crearFactura(db: Db, datos: NuevaFactura) {
+   })
+ 
+   const subtotalCent = sumar(...lineas.map((linea) => linea.totalCent))
+-  const impuestoCent = porcentaje(subtotalCent, ITBIS_BPS)
++  const descuentoBps = (datos.descuentoPct ?? 0) * 100
++  const descuentoCent = descuento(subtotalCent, datos.descuentoPct ?? 0)
++  const baseCent = subtotalCent - descuentoCent
++  const impuestoCent = porcentaje(baseCent, ITBIS_BPS)
+ 
+   return db.factura.create({
+     data: {
+       clienteId: datos.clienteId,
+       subtotalCent,
++      descuentoBps,
++      descuentoCent,
+       impuestoCent,
+-      totalCent: subtotalCent + impuestoCent,
++      totalCent: baseCent + impuestoCent,
+       lineas: { create: lineas },
+     },
+     include: conLineas,
+@@ -88,6 +95,8 @@ export function aDto(factura: FacturaConLineas) {
+     estado: factura.estado as Estado,
+     clienteId: factura.clienteId,
+     subtotal: formatear(factura.subtotalCent),
++    descuentoPct: factura.descuentoBps / 100,
++    descuento: formatear(factura.descuentoCent),
+     impuesto: formatear(factura.impuestoCent),
+     total: formatear(factura.totalCent),
+     emitidaEn: factura.emitidaEn?.toISOString() ?? null,

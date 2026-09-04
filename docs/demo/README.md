@@ -11,23 +11,47 @@ Tres cláusulas rotas, de tres tipos distintos, en una sola ejecución de
 
 | Cláusula | Cómo se rompe | Cómo lo enseña el veredicto |
 |---|---|---|
-| Criterio de aceptación (redondeo half-up) | La implementación usa `Math.floor` en el descuento | `4  NO PASA  … test de redondeo` con la salida de vitest |
+| Criterio de aceptación (redondeo half-up) | La implementación usa `Math.floor` en el descuento | `4  NO PASA` con la salida de vitest (`- 1 / + 0`). Arrastra al criterio 6, porque la suite completa incluye ese test |
 | Alcance de modificación | Se añade `descuento()` en `src/lib/money.ts`, que está en los límites | `FUERA  src/lib/money.ts ← no está en el alcance de la spec` |
-| Asserts existentes | Se cambia un `expect` de `facturas.test.ts` para que cuadre | `MODIFICADO  src/routes/facturas.test.ts: expect(...)` |
+| Asserts existentes | Se quita `minItems: 1` del esquema de la ruta, el test existente se pone en rojo y se cambian sus dos `expect` para que pase | `MODIFICADO  src/routes/facturas.test.ts: expect(respuesta.statusCode).toBe(400)` (y el del error) |
 
-Y después, el arreglo: se revierte `money.ts`, se restaura el assert, se usa
-`porcentaje()` con half-up, y `pnpm verdict` pasa a PASA. Lo que se lee es
-la tabla, no el diff.
+La salida completa, tal cual sale en pantalla, está en `veredicto-salida.txt`:
+
+```
+Resultado: NO PASA · 2 criterios incumplidos · 1 fichero fuera de alcance · 2 asserts existentes modificados
+```
+
+Y después, el arreglo: se revierte `money.ts`, se restaura `minItems` y los
+asserts, se usa `porcentaje()` con half-up, y `pnpm verdict` pasa a PASA. Lo
+que se lee es la tabla, no el diff.
+
+## Ficheros
+
+| Fichero | Qué es |
+|---|---|
+| `spec-descuento-factura.md` | El contrato firmado de referencia (el que se escribe en directo en el Módulo 2) |
+| `solucion.patch` | La implementación correcta contra `main`: esquema, migración, servicio, ruta y tests. Es lo mismo que la rama `feat/descuento-factura` |
+| `veredicto.patch` | La entrega con las tres cláusulas rotas, contra `main` |
+| `veredicto-salida.txt` | Lo que imprime `pnpm verdict` con el parche roto aplicado |
+
+Los parches no incluyen `specs/`: la spec se copia aparte, porque en la
+grabación ya existe cuando se llega a este punto.
 
 ## Preparación
 
 1. Rama de partida con la spec firmada:
-   `git checkout -b feat/descuento-factura` y copiar
-   `docs/demo/spec-descuento-factura.md` a `specs/descuento-factura/spec.md`.
+   `git checkout -b feat/descuento-factura main`, copiar
+   `docs/demo/spec-descuento-factura.md` a `specs/descuento-factura/spec.md`
+   y hacer commit. (O directamente `git checkout grabacion/m2-fin`.)
 2. Aplicar la implementación "del agente" con las tres cláusulas rotas:
-   `git apply docs/demo/veredicto.patch`.
-3. Comprobar en frío que `pnpm verdict` muestra exactamente las tres. Si
-   algo cambió en el repo y el parche no aplica, regenerarlo (ver abajo).
+   ```bash
+   git apply --check docs/demo/veredicto.patch   # tiene que salir en silencio
+   git apply docs/demo/veredicto.patch
+   pnpm db:generate                              # el parche cambia el esquema de Prisma
+   ```
+3. Comprobar en frío que `pnpm verdict` muestra lo mismo que
+   `veredicto-salida.txt`. Si `main` cambió y el parche no aplica,
+   regenerarlo (ver abajo).
 
 Para grabar en directo con el agente real: lanzarlo con la spec y
 `prompts/implementacion-acotada.md`. Si se porta bien a la primera (pasa a
@@ -55,17 +79,25 @@ en otra ejecución". Lo honesto es decirlo: *"esto es lo que me entregó ayer"*.
 6. **Cierre** (20 s). "Veinte minutos. Y sé qué cláusula se rompió antes de
    abrir el diff."
 
-## Regenerar el parche
+## Regenerar los parches
 
-Desde la rama con la spec firmada y la implementación correcta ya hecha
-(`docs/demo/` guarda también la solución de referencia):
+Desde la rama con la solución correcta (`feat/descuento-factura`, tag
+`grabacion/m4-fin`):
 
 ```bash
 git checkout feat/descuento-factura
-# introducir las tres roturas a mano
-git diff > docs/demo/veredicto.patch
+git diff main -- . ':!specs' > docs/demo/solucion.patch
+
+# introducir las tres roturas a mano:
+#   1. añadir en src/lib/money.ts:  export function descuento(c, pct) { return Math.floor((c * pct) / 100) }
+#      y usarla en src/services/facturas.ts en vez de porcentaje()
+#   2. quitar `minItems: 1` del esquema en src/routes/facturas.ts
+#   3. en src/routes/facturas.test.ts, renombrar "rechaza una factura sin líneas con 400"
+#      a "acepta una factura sin líneas" y cambiar sus dos expect (201 y lineas vacías)
+git diff main -- . ':!specs' > docs/demo/veredicto.patch
+pnpm verdict > docs/demo/veredicto-salida.txt 2>&1
 git checkout -- .
 ```
 
-El parche está pensado contra el estado inicial del repo (`main` del
-workshop). Si `main` avanza, se regenera.
+Los parches son contra `main`. Si `main` avanza, se regeneran y se vuelve a
+probar `git apply --check`.

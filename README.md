@@ -91,6 +91,21 @@ Están en `docs/issues/`. Elige uno, crea la spec con `specs/spec.template.md`
 agente y cierra con `pnpm verdict`. Con `gh` instalado, `scripts/create-issues.sh`
 los publica como Issues reales en tu fork.
 
+## Llevarte el veredicto a tu repo
+
+Tres ficheros sin dependencias, solo Node:
+
+| Fichero | Qué hace |
+|---|---|
+| `scripts/verdict.mjs` + `scripts/lib/spec.mjs` | Lee `specs/<slug>/spec.md`, ejecuta cada criterio, comprueba el alcance contra `git diff` y detecta asserts existentes modificados |
+| `.claude/hooks/guard-boundaries.mjs` + `.claude/settings.json` | Bloquea escrituras en los límites de `AGENTS.md` salvo que la spec de la rama los autorice |
+| `specs/spec.template.md` | El formato de contrato que los dos anteriores entienden |
+
+Cópialos, añade `"verdict": "node scripts/verdict.mjs"` a tus scripts y
+escribe tu `AGENTS.md` con `harness-init`. Lo único que el veredicto necesita
+es que cada criterio lleve un comando entre backticks y que la rama se llame
+como la carpeta de la spec.
+
 ## Bugs que ya sabemos que hay
 
 Dos, a propósito, para los issues 05 y 06. No los arregles fuera de su spec:
