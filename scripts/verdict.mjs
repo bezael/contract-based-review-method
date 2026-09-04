@@ -49,9 +49,9 @@ const cambiados = new Set([
   ...git('git ls-files --others --exclude-standard'),
 ].map(normalizar))
 
-// La propia spec y su carpeta siempre están en alcance.
 const carpetaSpec = normalizar(relative(process.cwd(), rutaSpec)).replace(/\/spec\.md$/, '')
-const alcance = [...spec.alcance, `${carpetaSpec}/**`]
+// La propia spec, su carpeta y la memoria del proyecto siempre están en alcance.
+const alcance = [...spec.alcance, `${carpetaSpec}/**`, 'specs/INDEX.md']
 
 const fueraDeAlcance = [...cambiados].filter((f) => !coincide(f, alcance))
 const dentro = [...cambiados].filter((f) => coincide(f, alcance))
