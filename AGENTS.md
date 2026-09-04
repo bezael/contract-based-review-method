@@ -26,6 +26,8 @@ contrato de cada tarea vive en `specs/<slug>/spec.md`.
 3. Se implementa solo lo que la spec pide, dentro de su alcance de modificación.
 4. Antes de abrir la PR: `pnpm verdict specs/<slug>/spec.md --write`. Lo que
    sale ahí es lo que lee la persona que revisa, en vez del diff.
+5. Al cambiar de rama, `pnpm db:generate`. El cliente de Prisma generado no
+   está en git; si es de otro esquema, los tests fallan con "no such column".
 
 ## Verificación
 

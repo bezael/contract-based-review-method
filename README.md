@@ -23,6 +23,10 @@ pnpm test             # 26 tests en verde
 pnpm dev              # http://localhost:3000/health
 ```
 
+Si cambias de rama y el esquema de Prisma es distinto, ejecuta
+`pnpm db:generate`: el cliente generado vive en `src/generated/`, fuera de
+git, y si se queda desactualizado los tests fallan con "no such column".
+
 Prueba la API:
 
 ```bash
