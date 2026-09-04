@@ -91,10 +91,18 @@ if (!soloAlcance) {
     const inicio = Date.now()
     const proceso = spawnSync(criterio.comando, { shell: true, encoding: 'utf8', stdio: 'pipe' })
     const ms = Date.now() - inicio
-    const salida = `${proceso.stdout ?? ''}${proceso.stderr ?? ''}`.trim().split(/\r?\n/).slice(-12).join('\n')
+    const completa = `${proceso.stdout ?? ''}${proceso.stderr ?? ''}`
+    let salida = completa.trim().split(/\r?\n/).slice(-12).join('\n')
+    let estado = proceso.status === 0 ? 'PASA' : 'NO PASA'
+    // Vitest sale con 0 cuando el filtro -t no encuentra ningún test. Eso no
+    // es un PASA: es un criterio que nadie ha comprobado.
+    if (estado === 'PASA' && /vitest/.test(criterio.comando) && !/Tests\s+\d+\s+passed/.test(completa)) {
+      estado = 'NO PASA'
+      salida = 'El comando no ejecutó ningún test: el filtro -t no coincide con ningún nombre. Escribe el test antes de dar el criterio por cumplido.'
+    }
     resultados.push({
       ...criterio,
-      estado: proceso.status === 0 ? 'PASA' : 'NO PASA',
+      estado,
       codigo: proceso.status,
       ms,
       salida,
