@@ -1,0 +1,15 @@
+packages:
+  - '.'
+
+# pnpm bloquea los scripts de instalación por defecto. Estos cuatro los
+# necesitamos: better-sqlite3 descarga su binario nativo, prisma descarga su
+# motor y esbuild su binario.
+allowBuilds:
+  '@prisma/engines': true
+  better-sqlite3: true
+  esbuild: true
+  prisma: true
+
+minimumReleaseAgeExclude:
+  - fastify@5.12.3
+  - eslint@10.10.0
