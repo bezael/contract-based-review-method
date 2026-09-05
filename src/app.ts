@@ -1,10 +1,10 @@
 import Fastify, { type FastifyError } from 'fastify'
 import type { Db } from './lib/db.js'
-import { esAppError } from './lib/errors.js'
-import { rutasClientes } from './routes/clientes.js'
-import { rutasFacturas } from './routes/facturas.js'
+import { isAppError } from './lib/errors.js'
+import { customerRoutes } from './routes/customers.js'
+import { invoiceRoutes } from './routes/invoices.js'
 
-export type OpcionesApp = {
+export type AppOptions = {
   db: Db
   logger?: boolean
 }
@@ -13,12 +13,12 @@ export type OpcionesApp = {
  * Construye la aplicación sin arrancarla. Los tests la usan con `inject`;
  * `server.ts` la arranca de verdad.
  */
-export function buildApp({ db, logger = false }: OpcionesApp) {
+export function buildApp({ db, logger = false }: AppOptions) {
   const app = Fastify({ logger })
 
   app.setErrorHandler((error: FastifyError, _request, reply) => {
-    if (esAppError(error)) {
-      return reply.status(error.status).send({ error: error.codigo, mensaje: error.message })
+    if (isAppError(error)) {
+      return reply.status(error.status).send({ error: error.code, mensaje: error.message })
     }
     if (error.validation) {
       return reply.status(400).send({ error: 'VALIDACION', mensaje: error.message })
@@ -29,8 +29,8 @@ export function buildApp({ db, logger = false }: OpcionesApp) {
 
   app.get('/health', async () => ({ ok: true }))
 
-  app.register(rutasClientes, { db })
-  app.register(rutasFacturas, { db })
+  app.register(customerRoutes, { db })
+  app.register(invoiceRoutes, { db })
 
   return app
 }

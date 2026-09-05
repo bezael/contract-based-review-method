@@ -6,10 +6,10 @@ export type Db = InstanceType<typeof PrismaClient>
 /**
  * Crea un cliente de Prisma sobre SQLite.
  *
- * `url` es un fichero (`file:./data/facturas.db`) o `:memory:` para tests.
+ * `url` is a file (`file:./data/invoices.db`) or `:memory:` for tests.
  * El cliente generado vive en src/generated/ y se regenera en `pnpm install`.
  */
-export function crearDb(url: string): Db {
+export function createDb(url: string): Db {
   const adapter = new PrismaBetterSqlite3({ url })
   return new PrismaClient({ adapter })
 }

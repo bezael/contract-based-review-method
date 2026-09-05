@@ -5,13 +5,13 @@ Labels: bug
 ## Qué pasa
 
 Si se llama a `POST /facturas/:id/emitir` sobre una factura que ya está
-`EMITIDA`, la factura recibe un número nuevo y una fecha de emisión nueva. El
+`ISSUED`, la factura recibe un número nuevo y una fecha de emisión nueva. El
 número anterior queda huérfano y la numeración correlativa tiene un hueco.
 Un reintento de red del cliente basta para provocarlo.
 
 ## Qué debería pasar
 
-Solo un `BORRADOR` se puede emitir. Cualquier otro estado devuelve
+Solo un `DRAFT` se puede emitir. Cualquier otro estado devuelve
 `409 ESTADO_INVALIDO` y no modifica nada.
 
 ## Cómo reproducirlo
@@ -25,11 +25,11 @@ curl -s -X POST localhost:3000/facturas/<id>/emitir   # numero: F-2026-0002 (esp
 
 - [ ] Existe un test de regresión que emite dos veces y comprueba que la
       segunda devuelve `409 ESTADO_INVALIDO` y que `numero` y `emitidaEn` no cambian.
-- [ ] Emitir un `BORRADOR` sigue funcionando exactamente igual.
+- [ ] Emitir un `DRAFT` sigue funcionando exactamente igual.
 - [ ] La suite existente sigue en verde sin modificar sus asserts.
 
 ## Alcance sugerido
 
-- `src/services/facturas.ts`
-- `src/services/facturas.test.ts`
-- `src/routes/facturas.test.ts`
+- `src/services/invoices.ts`
+- `src/services/invoices.test.ts`
+- `src/routes/invoices.test.ts`

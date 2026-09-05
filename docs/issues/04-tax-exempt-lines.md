@@ -30,6 +30,6 @@ factura el subtotal exento y el gravado.
 
 - `prisma/schema.prisma` y una migración: columna `exento` en `LineaFactura`
   con valor por defecto `false`. **Límite de AGENTS.md: lo autoriza quien firma la spec.**
-- `src/services/facturas.ts`
-- `src/routes/facturas.ts`
+- `src/services/invoices.ts`
+- `src/routes/invoices.ts`
 - Sus tests

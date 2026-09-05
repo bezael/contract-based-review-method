@@ -1,8 +1,8 @@
 import type { FastifyPluginAsync } from 'fastify'
 import type { Db } from '../lib/db.js'
-import { crearCliente, obtenerCliente, type NuevoCliente } from '../services/clientes.js'
+import { createCustomer, getCustomer, type NewCustomer } from '../services/customers.js'
 
-const nuevoClienteSchema = {
+const newCustomerSchema = {
   type: 'object',
   required: ['nombre', 'rnc'],
   additionalProperties: false,
@@ -14,17 +14,17 @@ const nuevoClienteSchema = {
   },
 } as const
 
-export const rutasClientes: FastifyPluginAsync<{ db: Db }> = async (app, { db }) => {
-  app.post<{ Body: NuevoCliente }>(
+export const customerRoutes: FastifyPluginAsync<{ db: Db }> = async (app, { db }) => {
+  app.post<{ Body: NewCustomer }>(
     '/clientes',
-    { schema: { body: nuevoClienteSchema } },
+    { schema: { body: newCustomerSchema } },
     async (request, reply) => {
-      const cliente = await crearCliente(db, request.body)
-      return reply.status(201).send(cliente)
+      const customer = await createCustomer(db, request.body)
+      return reply.status(201).send(customer)
     },
   )
 
   app.get<{ Params: { id: string } }>('/clientes/:id', async (request) => {
-    return obtenerCliente(db, request.params.id)
+    return getCustomer(db, request.params.id)
   })
 }

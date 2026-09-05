@@ -5,7 +5,7 @@ Labels: refactor
 ## Qué se quiere cambiar y por qué
 
 La numeración correlativa vive como función privada dentro de
-`src/services/facturas.ts`. Va a crecer (series por sucursal, notas de
+`src/services/invoices.ts`. Va a crecer (series por sucursal, notas de
 crédito con prefijo propio) y ahora mismo no se puede probar sola. Se extrae
 a `src/services/numerador.ts` con una función `siguienteNumero(db, prefijo, fecha)`
 y sus propios tests.
@@ -22,11 +22,11 @@ y sus propios tests.
 - [ ] La suite existente pasa sin modificar ni un assert.
 - [ ] `src/services/numerador.test.ts` prueba el formato, el reinicio anual y
       el caso de la primera factura del año.
-- [ ] `src/services/facturas.ts` ya no contiene lógica de numeración: solo importa `siguienteNumero`.
+- [ ] `src/services/invoices.ts` ya no contiene lógica de numeración: solo importa `siguienteNumero`.
 - [ ] `pnpm typecheck && pnpm lint` en verde, sin excepciones nuevas.
 
 ## Alcance sugerido
 
 - `src/services/numerador.ts` (nuevo)
 - `src/services/numerador.test.ts` (nuevo)
-- `src/services/facturas.ts`
+- `src/services/invoices.ts`

@@ -1,23 +1,23 @@
 /**
- * Smoke test: la aplicación arranca de verdad, escucha en un puerto y
- * responde. No prueba lógica; prueba que nada del arranque está roto
- * (imports, cliente de Prisma generado, binario de SQLite, plugins).
+ * Smoke test: starts the application, listens on a port, and responds.
+ * It does not test business logic; it verifies startup dependencies such as
+ * imports, the generated Prisma client, the SQLite binary, and plugins.
  */
 import { buildApp } from '../src/app.js'
-import { crearDbDePrueba } from '../src/test/db.js'
+import { createTestDb } from '../src/test/db.js';
 
-const app = buildApp({ db: await crearDbDePrueba() })
+const app = buildApp({ db: await createTestDb() });
 
 try {
-  const direccion = await app.listen({ port: 0, host: '127.0.0.1' })
-  const respuesta = await fetch(`${direccion}/health`)
-  const cuerpo = (await respuesta.json()) as { ok?: boolean }
-  if (respuesta.status !== 200 || cuerpo.ok !== true) {
-    throw new Error(`/health respondió ${respuesta.status}: ${JSON.stringify(cuerpo)}`)
+  const address = await app.listen({ port: 0, host: '127.0.0.1' })
+  const response = await fetch(`${address}/health`)
+  const body = (await response.json()) as { ok?: boolean }
+  if (response.status !== 200 || body.ok !== true) {
+    throw new Error(`/health returned ${response.status}: ${JSON.stringify(body)}`)
   }
-  console.log(`SMOKE OK · ${direccion}/health -> ${respuesta.status}`)
+  console.log(`SMOKE OK · ${address}/health -> ${response.status}`)
 } catch (error) {
-  console.error('SMOKE FALLÓ')
+  console.error('SMOKE FAILED')
   console.error(error)
   process.exitCode = 1
 } finally {

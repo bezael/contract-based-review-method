@@ -38,7 +38,7 @@ Sección a sección, con estas reglas:
 - **Qué se quiere**: el resultado observable en dos o tres frases. Nada de implementación.
 - **Qué queda fuera**: obligatorio y con contenido. Si el Issue no lo dice, dedúcelo de lo que alguien podría suponer incluido.
 - **Criterios de aceptación**: cada fila lleva un comando entre backticks que sale con código distinto de cero si el criterio no se cumple. Pásale a cada uno la prueba de una línea: *¿puedo escribir algo que compruebe esto sin mí?* Lo que no la pase va a "Qué se quiere" como intención, no a la tabla.
-  - Los tests que aún no existen se nombran ya: `pnpm vitest run src/routes/facturas.test.ts -t "anular"`. Escribir el test es parte de la tarea.
+  - Los tests que aún no existen se nombran ya: `pnpm vitest run src/routes/invoices.test.ts -t "anular"`. Escribir el test es parte de la tarea.
   - Siempre incluye las dos cláusulas fijas: suite existente en verde sin tocar asserts (`pnpm test`) y tipos + lint sin excepciones nuevas (`pnpm typecheck && pnpm lint`).
 - **Alcance de modificación**: lista cerrada de ficheros, con sus tests. Si un fichero de los límites de `AGENTS.md` tiene que entrar (migraciones, `money.ts`, `package.json`), escríbelo con el motivo y deja claro que lo firma una persona. El hook lo bloqueará si no está aquí.
 - **Riesgos**: qué de lo que hoy funciona podría romperse y qué comando lo detectaría. "Ninguno lo detectaría" es un hueco del harness: anótalo.

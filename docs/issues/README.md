@@ -8,7 +8,7 @@ contrato → carril → implementación → veredicto → revisión → PR.
 | # | Tipo | Tarea | Nivel | Toca límites |
 |---|---|---|---|---|
 | 01 | feature | Anular una factura emitida | ★☆☆ | no |
-| 02 | feature | Registrar pagos y pasar a PAGADA | ★★☆ | migración |
+| 02 | feature | Registrar pagos y pasar a PAID | ★★☆ | migración |
 | 03 | feature | Listar facturas con filtros y paginación | ★★☆ | no |
 | 04 | feature | Líneas exentas de ITBIS | ★★☆ | migración |
 | 05 | bug | Un precio con un solo decimal se registra mal | ★☆☆ | `money.ts` |
@@ -18,7 +18,7 @@ contrato → carril → implementación → veredicto → revisión → PR.
 | 09 | feature | Notas de crédito | ★★★ | migración (y hay que dividirla) |
 | 10 | transversal | Identificador de petición en respuestas y logs | ★★☆ | no |
 
-`00-demo-descuento-factura.md` es la feature que se construye en el workshop
+`00-invoice-discount-demo.md` es la feature que se construye en el workshop
 delante de ti. Está aquí para que puedas repetirla por tu cuenta.
 
 ## Publicarlos en tu fork

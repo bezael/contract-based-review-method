@@ -9,6 +9,6 @@ export default defineConfig({
     path: 'prisma/migrations',
   },
   datasource: {
-    url: process.env.DATABASE_URL ?? 'file:./data/facturas.db',
+    url: process.env.DATABASE_URL ?? 'file:./data/invoices.db',
   },
 })

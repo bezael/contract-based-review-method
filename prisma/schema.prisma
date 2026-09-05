@@ -2,7 +2,7 @@
 //
 // Los importes se guardan SIEMPRE en céntimos (Int). Nunca Float.
 // Las fechas se guardan y se devuelven en UTC.
-// Los estados son strings acotados desde src/services/facturas.ts, porque
+// Los estados son strings acotados desde src/services/invoices.ts, porque
 // SQLite no tiene enums.
 
 generator client {
@@ -14,35 +14,35 @@ datasource db {
   provider = "sqlite"
 }
 
-model Cliente {
+model Customer {
   id        String    @id @default(cuid())
-  nombre    String
-  rnc       String    @unique
+  name      String
+  taxId     String    @unique
   email     String?
-  creadoEn  DateTime  @default(now())
-  facturas  Factura[]
+  createdAt DateTime  @default(now())
+  invoices  Invoice[]
 }
 
-model Factura {
-  id           String         @id @default(cuid())
-  numero       String?        @unique
-  estado       String         @default("BORRADOR")
-  clienteId    String
-  cliente      Cliente        @relation(fields: [clienteId], references: [id])
-  subtotalCent Int
-  impuestoCent Int
-  totalCent    Int
-  emitidaEn    DateTime?
-  creadoEn     DateTime       @default(now())
-  lineas       LineaFactura[]
+model Invoice {
+  id           String        @id @default(cuid())
+  number       String?       @unique
+  status       String        @default("DRAFT")
+  customerId   String
+  customer     Customer      @relation(fields: [customerId], references: [id])
+  subtotalCents Int
+  taxCents     Int
+  totalCents   Int
+  issuedAt     DateTime?
+  createdAt    DateTime      @default(now())
+  lines        InvoiceLine[]
 }
 
-model LineaFactura {
+model InvoiceLine {
   id             String  @id @default(cuid())
-  facturaId      String
-  factura        Factura @relation(fields: [facturaId], references: [id], onDelete: Cascade)
-  descripcion    String
-  cantidad       Int
-  precioUnitCent Int
-  totalCent      Int
+  invoiceId      String
+  invoice        Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description    String
+  quantity       Int
+  unitPriceCents Int
+  totalCents     Int
 }

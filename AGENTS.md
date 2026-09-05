@@ -70,7 +70,7 @@ Detectadas leyendo el código, no impuestas desde fuera:
 - Los handlers de `src/routes/` no hablan con Prisma. Pasan por un servicio en `src/services/`.
 - Todo error de dominio es un `AppError` de `src/lib/errors.ts`, con un código del catálogo `CODIGOS`. No se lanzan strings ni `Error` pelado: eso es un 500 y se investiga.
 - Los importes son enteros en céntimos en todo el código y en la base de datos. Entran y salen de la API como string decimal (`"1234.56"`) a través de `src/lib/money.ts`. Nunca `Float`.
-- Los estados de factura se acotan en `ESTADOS` (`src/services/facturas.ts`), no en el esquema: SQLite no tiene enums.
+- Los estados de factura se acotan en `ESTADOS` (`src/services/invoices.ts`), no en el esquema: SQLite no tiene enums.
 - Los tests van junto al fichero que prueban, como `*.test.ts`. Cada fichero crea su propia SQLite en memoria con `crearDbDePrueba()`; no comparten estado.
 - Las fechas se guardan y se devuelven siempre en UTC, en ISO 8601.
 - La validación de entrada es JSON Schema en la ruta (`schema.body`). El servicio da por válida la forma y valida el dominio.

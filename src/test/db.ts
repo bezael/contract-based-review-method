@@ -1,34 +1,34 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { crearDb, type Db } from '../lib/db.js'
+import { createDb, type Db } from '../lib/db.js'
 
 /**
- * Base de datos SQLite en memoria con las migraciones aplicadas.
+ * Base de data SQLite en memoria con las migraciones aplicadas.
  *
- * Cada fichero de test crea la suya: aislamiento total y cero ficheros que
+ * Cada file de test crea la suya: aislamiento total y cero ficheros que
  * limpiar. Las migraciones se leen de prisma/migrations, así que los tests
  * prueban el mismo esquema que producción.
  */
-export async function crearDbDePrueba(): Promise<Db> {
-  const db = crearDb(':memory:')
-  const directorio = join(process.cwd(), 'prisma', 'migrations')
-  const carpetas = readdirSync(directorio)
-    .filter((nombre) => /^\d/.test(nombre))
+export async function createTestDb(): Promise<Db> {
+  const db = createDb(':memory:')
+  const directory = join(process.cwd(), 'prisma', 'migrations')
+  const folders = readdirSync(directory)
+    .filter((name) => /^\d/.test(name))
     .sort()
 
-  for (const carpeta of carpetas) {
-    const sql = readFileSync(join(directorio, carpeta, 'migration.sql'), 'utf8')
-    const sentencias = sql
+  for (const folder of folders) {
+    const sql = readFileSync(join(directory, folder, 'migration.sql'), 'utf8')
+    const statements = sql
       .split(';')
-      .map((sentencia) => sentencia.trim())
-      .filter((sentencia) => sentencia.length > 0)
-    for (const sentencia of sentencias) {
-      await db.$executeRawUnsafe(sentencia)
+      .map((statement) => statement.trim())
+      .filter((statement) => statement.length > 0)
+    for (const statement of statements) {
+      await db.$executeRawUnsafe(statement)
     }
   }
   return db
 }
 
-export async function clienteDePrueba(db: Db, rnc = '101010101') {
-  return db.cliente.create({ data: { nombre: 'Cliente de prueba', rnc } })
+export async function testCustomer(db: Db, rnc = '101010101') {
+  return db.customer.create({ data: { name: 'Test customer', taxId: rnc } })
 }

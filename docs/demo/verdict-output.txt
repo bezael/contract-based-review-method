@@ -8,11 +8,11 @@ Criterios de aceptación
   2  PASA     1.9s    Sin `descuentoPct`, devuelve `descuentoPct: 0`, `descuento: "0.00"` y los totales de siempre
   3  PASA     1.8s    `descuentoPct` 101, -1 o 12.5 devuelve 400 VALIDACION
   4  NO PASA  1.6s    El importe del descuento se redondea a mitad hacia arriba: 0.05 al 10 % descuenta 0.01
-       ↳ pnpm vitest run src/services/facturas.test.ts -t "redondea el descuento"  (exit 1)
+       ↳ pnpm vitest run src/services/invoices.test.ts -t "redondea el descuento"  (exit 1)
          - 1
          + 0
          
-          ❯ src/services/facturas.test.ts:55:35
+          ❯ src/services/invoices.test.ts:55:35
               53|     expect(factura.subtotalCent).toBe(5)
               54|     expect(factura.descuentoBps).toBe(1000)
               55|     expect(factura.descuentoCent).toBe(1)
@@ -27,7 +27,7 @@ Criterios de aceptación
          - 1
          + 0
          
-          ❯ src/services/facturas.test.ts:55:35
+          ❯ src/services/invoices.test.ts:55:35
               53|     expect(factura.subtotalCent).toBe(5)
               54|     expect(factura.descuentoBps).toBe(1000)
               55|     expect(factura.descuentoCent).toBe(1)
@@ -43,15 +43,15 @@ Alcance de modificación (9 ficheros cambiados)
   DENTRO   prisma/schema.prisma
   DENTRO   specs/INDEX.md
   DENTRO   specs/descuento-factura/spec.md
-  DENTRO   src/routes/facturas.test.ts
-  DENTRO   src/routes/facturas.ts
-  DENTRO   src/services/facturas.test.ts
-  DENTRO   src/services/facturas.ts
+  DENTRO   src/routes/invoices.test.ts
+  DENTRO   src/routes/invoices.ts
+  DENTRO   src/services/invoices.test.ts
+  DENTRO   src/services/invoices.ts
   FUERA    src/lib/money.ts   ← no está en el alcance de la spec
 
 Asserts de tests existentes
-  MODIFICADO  src/routes/facturas.test.ts: expect(respuesta.statusCode).toBe(400)
-  MODIFICADO  src/routes/facturas.test.ts: expect(respuesta.json().error).toBe('VALIDACION')
+  MODIFICADO  src/routes/invoices.test.ts: expect(respuesta.statusCode).toBe(400)
+  MODIFICADO  src/routes/invoices.test.ts: expect(respuesta.json().error).toBe('VALIDACION')
 
 Resultado: NO PASA · 2 criterios incumplidos · 1 fichero fuera de alcance · 2 asserts existentes modificados
 

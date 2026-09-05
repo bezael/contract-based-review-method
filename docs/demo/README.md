@@ -13,9 +13,9 @@ Tres cláusulas rotas, de tres tipos distintos, en una sola ejecución de
 |---|---|---|
 | Criterio de aceptación (redondeo half-up) | La implementación usa `Math.floor` en el descuento | `4  NO PASA` con la salida de vitest (`- 1 / + 0`). Arrastra al criterio 6, porque la suite completa incluye ese test |
 | Alcance de modificación | Se añade `descuento()` en `src/lib/money.ts`, que está en los límites | `FUERA  src/lib/money.ts ← no está en el alcance de la spec` |
-| Asserts existentes | Se quita `minItems: 1` del esquema de la ruta, el test existente se pone en rojo y se cambian sus dos `expect` para que pase | `MODIFICADO  src/routes/facturas.test.ts: expect(respuesta.statusCode).toBe(400)` (y el del error) |
+| Asserts existentes | Se quita `minItems: 1` del esquema de la ruta, el test existente se pone en rojo y se cambian sus dos `expect` para que pase | `MODIFICADO  src/routes/invoices.test.ts: expect(respuesta.statusCode).toBe(400)` (y el del error) |
 
-La salida completa, tal cual sale en pantalla, está en `veredicto-salida.txt`:
+La salida completa, tal cual sale en pantalla, está en `verdict-output.txt`:
 
 ```
 Resultado: NO PASA · 2 criterios incumplidos · 1 fichero fuera de alcance · 2 asserts existentes modificados
@@ -29,10 +29,10 @@ que se lee es la tabla, no el diff.
 
 | Fichero | Qué es |
 |---|---|
-| `spec-descuento-factura.md` | El contrato firmado de referencia (el que se escribe en directo en el Módulo 2) |
-| `solucion.patch` | La implementación correcta contra `main`: esquema, migración, servicio, ruta y tests. Es lo mismo que la rama `feat/descuento-factura` |
-| `veredicto.patch` | La entrega con las tres cláusulas rotas, contra `main` |
-| `veredicto-salida.txt` | Lo que imprime `pnpm verdict` con el parche roto aplicado |
+| `invoice-discount-spec.md` | El contrato firmado de referencia (el que se escribe en directo en el Módulo 2) |
+| `solution.patch` | La implementación correcta contra `main`: esquema, migración, servicio, ruta y tests. Es lo mismo que la rama `feat/descuento-factura` |
+| `verdict.patch` | La entrega con las tres cláusulas rotas, contra `main` |
+| `verdict-output.txt` | Lo que imprime `pnpm verdict` con el parche roto aplicado |
 
 Los parches no incluyen `specs/`: la spec se copia aparte, porque en la
 grabación ya existe cuando se llega a este punto.
@@ -41,20 +41,20 @@ grabación ya existe cuando se llega a este punto.
 
 1. Rama de partida con la spec firmada:
    `git checkout -b feat/descuento-factura main`, copiar
-   `docs/demo/spec-descuento-factura.md` a `specs/descuento-factura/spec.md`
+   `docs/demo/invoice-discount-spec.md` a `specs/descuento-factura/spec.md`
    y hacer commit. (O directamente `git checkout grabacion/m2-fin`.)
 2. Aplicar la implementación "del agente" con las tres cláusulas rotas:
    ```bash
-   git apply --check docs/demo/veredicto.patch   # tiene que salir en silencio
-   git apply docs/demo/veredicto.patch
+   git apply --check docs/demo/verdict.patch   # tiene que salir en silencio
+   git apply docs/demo/verdict.patch
    pnpm db:generate                              # el parche cambia el esquema de Prisma
    ```
 3. Comprobar en frío que `pnpm verdict` muestra lo mismo que
-   `veredicto-salida.txt`. Si `main` cambió y el parche no aplica,
+   `verdict-output.txt`. Si `main` cambió y el parche no aplica,
    regenerarlo (ver abajo).
 
 Para grabar en directo con el agente real: lanzarlo con la spec y
-`prompts/implementacion-acotada.md`. Si se porta bien a la primera (pasa a
+`prompts/scoped-implementation.md`. Si se porta bien a la primera (pasa a
 menudo), se enseña el PASA y después se aplica el parche como "lo que hizo
 en otra ejecución". Lo honesto es decirlo: *"esto es lo que me entregó ayer"*.
 
@@ -86,16 +86,16 @@ Desde la rama con la solución correcta (`feat/descuento-factura`, tag
 
 ```bash
 git checkout feat/descuento-factura
-git diff main -- . ':!specs' > docs/demo/solucion.patch
+git diff main -- . ':!specs' > docs/demo/solution.patch
 
 # introducir las tres roturas a mano:
 #   1. añadir en src/lib/money.ts:  export function descuento(c, pct) { return Math.floor((c * pct) / 100) }
-#      y usarla en src/services/facturas.ts en vez de porcentaje()
-#   2. quitar `minItems: 1` del esquema en src/routes/facturas.ts
-#   3. en src/routes/facturas.test.ts, renombrar "rechaza una factura sin líneas con 400"
+#      y usarla en src/services/invoices.ts en vez de porcentaje()
+#   2. quitar `minItems: 1` del esquema en src/routes/invoices.ts
+#   3. en src/routes/invoices.test.ts, renombrar "rechaza una factura sin líneas con 400"
 #      a "acepta una factura sin líneas" y cambiar sus dos expect (201 y lineas vacías)
-git diff main -- . ':!specs' > docs/demo/veredicto.patch
-pnpm verdict > docs/demo/veredicto-salida.txt 2>&1
+git diff main -- . ':!specs' > docs/demo/verdict.patch
+pnpm verdict > docs/demo/verdict-output.txt 2>&1
 git checkout -- .
 ```
 

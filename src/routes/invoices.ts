@@ -1,14 +1,22 @@
 import type { FastifyPluginAsync } from 'fastify'
 import type { Db } from '../lib/db.js'
 import {
-  aDto,
-  crearFactura,
-  emitirFactura,
-  obtenerFactura,
-  type NuevaFactura,
-} from '../services/facturas.js'
+  toDto,
+  createInvoice,
+  issueInvoice,
+  getInvoice,
+} from '../services/invoices.js'
 
-const nuevaFacturaSchema = {
+type CreateInvoiceRequest = {
+  clienteId: string
+  lineas: Array<{
+    descripcion: string
+    cantidad: number
+    precioUnitario: string
+  }>
+}
+
+const newInvoiceSchema = {
   type: 'object',
   required: ['clienteId', 'lineas'],
   additionalProperties: false,
@@ -32,21 +40,28 @@ const nuevaFacturaSchema = {
   },
 } as const
 
-export const rutasFacturas: FastifyPluginAsync<{ db: Db }> = async (app, { db }) => {
-  app.post<{ Body: NuevaFactura }>(
+export const invoiceRoutes: FastifyPluginAsync<{ db: Db }> = async (app, { db }) => {
+  app.post<{ Body: CreateInvoiceRequest }>(
     '/facturas',
-    { schema: { body: nuevaFacturaSchema } },
+    { schema: { body: newInvoiceSchema } },
     async (request, reply) => {
-      const factura = await crearFactura(db, request.body)
-      return reply.status(201).send(aDto(factura))
+      const invoice = await createInvoice(db, {
+        customerId: request.body.clienteId,
+        lines: request.body.lineas.map((line) => ({
+          description: line.descripcion,
+          quantity: line.cantidad,
+          unitPrice: line.precioUnitario,
+        })),
+      })
+      return reply.status(201).send(toDto(invoice))
     },
   )
 
   app.get<{ Params: { id: string } }>('/facturas/:id', async (request) => {
-    return aDto(await obtenerFactura(db, request.params.id))
+    return toDto(await getInvoice(db, request.params.id))
   })
 
   app.post<{ Params: { id: string } }>('/facturas/:id/emitir', async (request) => {
-    return aDto(await emitirFactura(db, request.params.id))
+    return toDto(await issueInvoice(db, request.params.id))
   })
 }

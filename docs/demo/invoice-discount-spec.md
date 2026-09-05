@@ -4,7 +4,7 @@
 > (Módulos 2 a 7). En la grabación se escribe en directo desde el Issue 00;
 > esta es la versión firmada, para comparar.
 
-**Issue:** #0 · docs/issues/00-demo-descuento-factura.md
+**Issue:** #0 · docs/issues/00-invoice-discount-demo.md
 **Fecha:** 2026-09-20
 **Estado:** firmada
 
@@ -26,11 +26,11 @@ tanto al crear como al consultar.
 
 | # | Criterio | Cómo se verifica |
 |---|---|---|
-| 1 | `POST /facturas` con `descuentoPct: 10` y subtotal 100.00 devuelve `descuento: "10.00"`, `impuesto: "16.20"`, `total: "106.20"` | `pnpm vitest run src/routes/facturas.test.ts -t "descuento del 10"` |
-| 2 | Sin `descuentoPct`, devuelve `descuentoPct: 0`, `descuento: "0.00"` y los totales de siempre | `pnpm vitest run src/routes/facturas.test.ts -t "sin descuento"` |
-| 3 | `descuentoPct` 101, -1 o 12.5 devuelve 400 VALIDACION | `pnpm vitest run src/routes/facturas.test.ts -t "descuento inválido"` |
-| 4 | El importe del descuento se redondea a mitad hacia arriba: 0.05 al 10 % descuenta 0.01 | `pnpm vitest run src/services/facturas.test.ts -t "redondea el descuento"` |
-| 5 | `GET /facturas/:id` devuelve los mismos campos de descuento | `pnpm vitest run src/routes/facturas.test.ts -t "devuelve el descuento"` |
+| 1 | `POST /facturas` con `descuentoPct: 10` y subtotal 100.00 devuelve `descuento: "10.00"`, `impuesto: "16.20"`, `total: "106.20"` | `pnpm vitest run src/routes/invoices.test.ts -t "descuento del 10"` |
+| 2 | Sin `descuentoPct`, devuelve `descuentoPct: 0`, `descuento: "0.00"` y los totales de siempre | `pnpm vitest run src/routes/invoices.test.ts -t "sin descuento"` |
+| 3 | `descuentoPct` 101, -1 o 12.5 devuelve 400 VALIDACION | `pnpm vitest run src/routes/invoices.test.ts -t "descuento inválido"` |
+| 4 | El importe del descuento se redondea a mitad hacia arriba: 0.05 al 10 % descuenta 0.01 | `pnpm vitest run src/services/invoices.test.ts -t "redondea el descuento"` |
+| 5 | `GET /facturas/:id` devuelve los mismos campos de descuento | `pnpm vitest run src/routes/invoices.test.ts -t "devuelve el descuento"` |
 | 6 | La suite existente sigue en verde sin tocar sus asserts | `pnpm test` |
 | 7 | Tipos y lint sin excepciones nuevas | `pnpm typecheck && pnpm lint` |
 
@@ -38,10 +38,10 @@ tanto al crear como al consultar.
 
 - `prisma/schema.prisma` — columnas `descuentoBps Int @default(0)` y `descuentoCent Int @default(0)` en `Factura`. **Límite de AGENTS.md, autorizado por Bezael el 2026-09-20: es una columna nueva con valor por defecto, no destruye datos.**
 - `prisma/migrations/**` — la migración generada con `pnpm db:migrate --name descuento-factura`. Misma autorización.
-- `src/services/facturas.ts`
-- `src/routes/facturas.ts`
-- `src/services/facturas.test.ts`
-- `src/routes/facturas.test.ts`
+- `src/services/invoices.ts`
+- `src/routes/invoices.ts`
+- `src/services/invoices.test.ts`
+- `src/routes/invoices.test.ts`
 
 ## Riesgos
 

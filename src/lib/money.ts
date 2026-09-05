@@ -1,55 +1,52 @@
 /**
- * Aritmética de dinero en céntimos.
+ * Money arithmetic in cents.
  *
- * Reglas de la casa:
- *  - Los importes entran y salen de la API como string decimal ("1234.56").
- *    Dentro, y en la base de datos, son enteros en céntimos. Nunca Float.
- *  - Redondeo a mitad hacia arriba (half-up), que es lo que espera contabilidad.
- *  - Los porcentajes se expresan en puntos básicos: 18 % = 1800 bps.
- *
- * Este fichero está en la lista de límites de AGENTS.md: no se toca sin que
- * la spec lo autorice explícitamente.
+ * House rules:
+ *  - Amounts enter and leave the API as decimal strings ("1234.56").
+ *    Internally and in the database, they are integer cents. Never Float.
+ *  - Rounding uses half-up, as required by accounting.
+ *  - Percentages use basis points: 18% = 1800 bps.
  */
 import { AppError } from './errors.js'
 
-/** ITBIS general de República Dominicana. */
-export const ITBIS_BPS = 1800
+/** General tax rate for the Dominican Republic. */
+export const TAX_BPS = 1800
 
-const FORMATO_IMPORTE = /^\d{1,12}(\.\d{1,2})?$/
+const MONEY_FORMAT = /^\d{1,12}(\.\d{1,2})?$/
 
-/** "1234.56" -> 123456. Solo acepta decimales positivos con hasta dos cifras. */
-export function aCentimos(importe: string): number {
-  if (!FORMATO_IMPORTE.test(importe)) {
+/** "1234.56" -> 123456. Only positive decimals with up to two digits are accepted. */
+export function toCents(moneyValue: string): number {
+  if (!MONEY_FORMAT.test(moneyValue)) {
     throw new AppError(
-      'VALIDACION',
-      `Importe inválido: "${importe}". Formato esperado: 1234.56`,
+      'VALIDATION',
+      `Invalid money format: "${moneyValue}". Expected format: 1234.56`,
     )
   }
-  const [entera = '0', decimal = ''] = importe.split('.')
-  return Number(entera) * 100 + Number(decimal)
+  const [wholePart = '0', decimalPart = ''] = moneyValue.split('.')
+  return Number(wholePart) * 100 + Number(decimalPart)
 }
 
 /** 123456 -> "1234.56". */
-export function formatear(centimos: number): string {
-  const signo = centimos < 0 ? '-' : ''
-  const absoluto = Math.abs(centimos)
-  const entera = Math.floor(absoluto / 100)
-  const decimal = String(absoluto % 100).padStart(2, '0')
-  return `${signo}${entera}.${decimal}`
+export function formatMoney(cents: number): string {
+  const sign = cents < 0 ? '-' : ''
+  const absolute = Math.abs(cents)
+  const wholePart = Math.floor(absolute / 100)
+  const decimalPart = String(absolute % 100).padStart(2, '0')
+  return `${sign}${wholePart}.${decimalPart}`
 }
 
-/** Porcentaje en puntos básicos, redondeando a mitad hacia arriba. */
-export function porcentaje(centimos: number, bps: number): number {
-  return Math.floor((centimos * bps + 5_000) / 10_000)
+/** Percentage in basis points, rounded half-up. */
+export function percentage(cents: number, basisPoints: number): number {
+  return Math.floor((cents * basisPoints + 5_000) / 10_000)
 }
 
-export function sumar(...importes: number[]): number {
-  return importes.reduce((acumulado, importe) => acumulado + importe, 0)
+export function sum(...amounts: number[]): number {
+  return amounts.reduce((accumulated, amount) => accumulated + amount, 0)
 }
 
-export function multiplicar(centimos: number, cantidad: number): number {
-  if (!Number.isInteger(cantidad) || cantidad < 1) {
-    throw new AppError('VALIDACION', `Cantidad inválida: ${cantidad}`)
+export function multiply(cents: number, quantity: number): number {
+  if (!Number.isInteger(quantity) || quantity < 1) {
+    throw new AppError('VALIDATION', `Invalid quantity: ${quantity}`)
   }
-  return centimos * cantidad
+  return cents * quantity
 }

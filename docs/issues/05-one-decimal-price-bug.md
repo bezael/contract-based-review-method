@@ -34,4 +34,4 @@ curl -s -X POST localhost:3000/facturas -H 'content-type: application/json' \
 - `src/lib/money.ts`. **Está en los límites de AGENTS.md: la spec tiene que
   autorizarlo explícitamente y decir por qué.**
 - `src/lib/money.test.ts`
-- `src/routes/facturas.test.ts`
+- `src/routes/invoices.test.ts`

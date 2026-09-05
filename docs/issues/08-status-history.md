@@ -5,7 +5,7 @@ Labels: feature, arquitectura
 ## Qué se quiere
 
 Auditoría exige saber cuándo cambió de estado cada factura. Cada transición
-(`BORRADOR → EMITIDA`, y las que existan: anulación, pago) deja un evento con
+(`DRAFT → ISSUED`, y las que existan: anulación, pago) deja un evento con
 el estado anterior, el nuevo y la fecha. `GET /facturas/:id/historial`
 devuelve la lista en orden cronológico.
 
@@ -17,8 +17,8 @@ devuelve la lista en orden cronológico.
 
 ## Criterios de aceptación (verificables)
 
-- [ ] Al crear una factura se registra un evento `null → BORRADOR`.
-- [ ] Al emitir, un evento `BORRADOR → EMITIDA` con la misma fecha que `emitidaEn`.
+- [ ] Al crear una factura se registra un evento `null → DRAFT`.
+- [ ] Al emitir, un evento `DRAFT → ISSUED` con la misma fecha que `emitidaEn`.
 - [ ] `GET /facturas/:id/historial` devuelve los eventos ordenados por fecha
       ascendente, con `de`, `a` y `fecha` en ISO UTC.
 - [ ] Sobre un id inexistente devuelve `404 FACTURA_NO_ENCONTRADA`.
@@ -30,8 +30,8 @@ devuelve la lista en orden cronológico.
 
 - `prisma/schema.prisma` y una migración: tabla `EventoFactura`.
   **Límite de AGENTS.md: lo autoriza quien firma la spec.**
-- `src/services/facturas.ts`
-- `src/routes/facturas.ts`
+- `src/services/invoices.ts`
+- `src/routes/invoices.ts`
 - Sus tests
 
 ## Contexto

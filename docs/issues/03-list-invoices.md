@@ -19,7 +19,7 @@ paginación para que el cliente sepa si hay más.
 
 - [ ] `GET /facturas` sin parámetros devuelve `200` con `datos: [...]`
       ordenadas por `creadoEn` descendente y `paginacion: { pagina: 1, porPagina: 20, total: N }`.
-- [ ] `?estado=EMITIDA` devuelve solo facturas emitidas; un estado que no
+- [ ] `?estado=ISSUED` devuelve solo facturas emitidas; un estado que no
       existe en `ESTADOS` devuelve `400 VALIDACION`.
 - [ ] `?clienteId=<id>` devuelve solo las de ese cliente; un cliente sin
       facturas devuelve lista vacía y `total: 0`, no 404.
@@ -32,6 +32,6 @@ paginación para que el cliente sepa si hay más.
 
 ## Alcance sugerido
 
-- `src/services/facturas.ts`
-- `src/routes/facturas.ts`
+- `src/services/invoices.ts`
+- `src/routes/invoices.ts`
 - Sus tests

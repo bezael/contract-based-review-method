@@ -1,32 +1,36 @@
 /**
- * Errores de dominio.
+ * Domain errors.
  *
- * Todo error que la API devuelve a propósito es un `AppError` con un código
- * del catálogo. El handler de errores de `app.ts` lo traduce a HTTP. Nada más
- * en el código lanza strings ni `Error` pelado: eso es un 500 y se investiga.
+ * Every error intentionally returned by the API is an `AppError` with a code
+ * from the catalog. The error handler in `app.ts` maps it to HTTP. Nothing
+ * else in the code throws strings or a bare `Error`: that becomes a 500.
  */
-export const CODIGOS = {
-  VALIDACION: 400,
-  CLIENTE_NO_ENCONTRADO: 404,
-  FACTURA_NO_ENCONTRADA: 404,
-  RNC_DUPLICADO: 409,
-  ESTADO_INVALIDO: 409,
+export const ERROR_CODES = {
+  VALIDATION: 400,
+  CUSTOMER_NOT_FOUND: 404,
+  INVOICE_NOT_FOUND: 404,
+  DUPLICATE_RNC: 409,
+  INVALID_STATUS: 409,
 } as const
 
-export type CodigoError = keyof typeof CODIGOS
+export type ErrorCode = keyof typeof ERROR_CODES
 
 export class AppError extends Error {
-  readonly codigo: CodigoError
+  readonly code: ErrorCode
   readonly status: number
 
-  constructor(codigo: CodigoError, mensaje: string) {
-    super(mensaje)
+  constructor(code: ErrorCode, message: string) {
+    super(message)
     this.name = 'AppError'
-    this.codigo = codigo
-    this.status = CODIGOS[codigo]
+    this.code = code
+    this.status = ERROR_CODES[code]
+  }
+
+  get errorCode(): ErrorCode {
+    return this.code
   }
 }
 
-export function esAppError(error: unknown): error is AppError {
+export function isAppError(error: unknown): error is AppError {
   return error instanceof AppError
 }

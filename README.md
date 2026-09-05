@@ -35,17 +35,17 @@ veredicto, y tú lees el veredicto en vez del diff.
 | Módulo | Qué se hace | Dónde está |
 |---|---|---|
 | 0 · Antes de escribir código | El nuevo cuello de botella: tú eres la única verificación del sistema | Capítulos 1 y 2 del ebook |
-| 1 · El sistema completo | El mapa del Issue a la PR verificada, y este repo corriendo en tu máquina | [`docs/diagrama-arquitectura.md`](docs/diagrama-arquitectura.md) · sección "Arrancar" de abajo |
-| 2 · Del Issue a la spec ejecutable | Criterios que un comando puede rechazar, alcance cerrado, firma | [`specs/spec.template.md`](specs/spec.template.md) · skill `contrato` · [`prompts/contrato.md`](prompts/contrato.md) |
+| 1 · El sistema completo | El mapa del Issue a la PR verificada, y este repo corriendo en tu máquina | [`docs/architecture-diagram.md`](docs/architecture-diagram.md) · sección "Arrancar" de abajo |
+| 2 · Del Issue a la spec ejecutable | Criterios que un comando puede rechazar, alcance cerrado, firma | [`specs/spec.template.md`](specs/spec.template.md) · skill `contrato` · [`prompts/contract.md`](prompts/contract.md) |
 | 3 · Preparar el harness | `AGENTS.md` con comandos reales, límites en tres capas, CI. **Sobre tu repo** | [`AGENTS.md`](AGENTS.md) · skill `dominicode-harness-init` · [`prompts/harness-init.md`](prompts/harness-init.md) · [`docs/checklists/harness-engineering.md`](docs/checklists/harness-engineering.md) |
-| 4 · Implementación agentic | Plan con comandos, implementación acotada, bucle corto tras cada cambio, el hook parando al agente | [`prompts/planificacion.md`](prompts/planificacion.md) · [`prompts/implementacion-acotada.md`](prompts/implementacion-acotada.md) · [`.claude/hooks/guard-boundaries.mjs`](.claude/hooks/guard-boundaries.mjs) |
+| 4 · Implementación agentic | Plan con comandos, implementación acotada, bucle corto tras cada cambio, el hook parando al agente | [`prompts/planning.md`](prompts/planning.md) · [`prompts/scoped-implementation.md`](prompts/scoped-implementation.md) · [`.claude/hooks/guard-boundaries.mjs`](.claude/hooks/guard-boundaries.mjs) |
 | 5 · Verificación | Las capas del veredicto, dos velocidades, `pnpm verdict` nombrando la cláusula rota | [`scripts/verdict.mjs`](scripts/verdict.mjs) · skill `veredicto` · [`docs/checklists/verificacion.md`](docs/checklists/verificacion.md) · [`docs/demo/`](docs/demo/) |
-| 6 · Code review con agentes | Un segundo agente sin el contexto del primero, veredicto de alineación | skill `revision-codigo` · [`docs/workflows/code-review.md`](docs/workflows/code-review.md) · [`prompts/revision-codigo.md`](prompts/revision-codigo.md) |
+| 6 · Code review con agentes | Un segundo agente sin el contexto del primero, veredicto de alineación | skill `revision-codigo` · [`docs/workflows/code-review.md`](docs/workflows/code-review.md) · [`prompts/code-review.md`](prompts/code-review.md) |
 | 7 · Cerrar el loop | La PR con contrato, veredicto y evidencia; los 20 minutos de quien revisa | skill `revision-pr` · [`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md) · [`docs/workflows/pr-review.md`](docs/workflows/pr-review.md) |
 | 8 · Tu turno | Diez issues reales para reproducir el ciclo sin seguir al instructor | [`docs/issues/`](docs/issues/) |
 
 La feature que se construye en el workshop es el
-[Issue 00, Descuento por factura](docs/issues/00-demo-descuento-factura.md).
+[Issue 00, Descuento por factura](docs/issues/00-invoice-discount-demo.md).
 La rama `feat/descuento-factura` tiene la solución de referencia con su
 contrato y su veredicto escritos.
 

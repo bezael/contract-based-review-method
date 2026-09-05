@@ -21,7 +21,7 @@ flowchart TB
     end
 
     subgraph EJECUCION["IMPLEMENTACIÓN · Módulo 4"]
-        P[Plan<br/>prompts/planificacion.md<br/>pasos con comando al final]
+        P[Plan<br/>prompts/planning.md<br/>pasos con comando al final]
         C[Código + tests<br/>dentro del alcance<br/>bucle corto tras cada cambio]
         P --> C
     end
@@ -58,11 +58,11 @@ flowchart TB
 | 1 | GitHub Issue | `docs/issues/*.md`, plantillas de issue | 2 |
 | 2 | Spec | `specs/<slug>/spec.md` desde `specs/spec.template.md` | 2 |
 | 3 | Contexto + Harness | `AGENTS.md`, hook, CI, `harness-init` | 3 |
-| 4 | Plan | `prompts/planificacion.md` | 4 |
-| 5 | Implementación | `prompts/implementacion-acotada.md`, bucle corto | 4 |
+| 4 | Plan | `prompts/planning.md` | 4 |
+| 5 | Implementación | `prompts/scoped-implementation.md`, bucle corto | 4 |
 | 6 | Tests + Checks | `pnpm typecheck && pnpm lint && pnpm test` | 5 |
 | 7 | Veredicto | `pnpm verdict specs/<slug>/spec.md --write` | 5 |
-| 8 | Code Review | skill `revision-codigo` / `prompts/revision-codigo.md` | 6 |
+| 8 | Code Review | skill `revision-codigo` / `prompts/code-review.md` | 6 |
 | 9 | Pull Request | skill `revision-pr` / plantilla de PR | 7 |
 | 10 | Decisión humana | `docs/workflows/pr-review.md` | 7 |
 
@@ -72,5 +72,5 @@ GitHub renderiza el bloque `mermaid` directamente. Para PNG o SVG en alta
 resolución (el "mapa visual" del workshop):
 
 ```bash
-npx -y @mermaid-js/mermaid-cli -i docs/diagrama-arquitectura.md -o docs/diagrama-arquitectura.svg -b transparent
+npx -y @mermaid-js/mermaid-cli -i docs/architecture-diagram.md -o docs/architecture-diagram.svg -b transparent
 ```

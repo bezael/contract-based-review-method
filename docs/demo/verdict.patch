@@ -91,10 +91,10 @@ index f05d2e9..1b2ecc6 100644
 +export function descuento(centimos: number, pct: number): number {
 +  return Math.floor((centimos * pct) / 100)
 +}
-diff --git a/src/routes/facturas.test.ts b/src/routes/facturas.test.ts
+diff --git a/src/routes/invoices.test.ts b/src/routes/invoices.test.ts
 index e52981c..c60dda6 100644
---- a/src/routes/facturas.test.ts
-+++ b/src/routes/facturas.test.ts
+--- a/src/routes/invoices.test.ts
++++ b/src/routes/invoices.test.ts
 @@ -40,15 +40,15 @@ describe('POST /facturas', () => {
      expect(respuesta.json().lineas[0]).toMatchObject({ precioUnitario: '12.50', total: '25.00' })
    })
@@ -184,10 +184,10 @@ index e52981c..c60dda6 100644
  describe('GET /facturas/:id', () => {
    it('devuelve la factura con sus líneas', async () => {
      const creada = await app.inject({ method: 'POST', url: '/facturas', payload: { clienteId, lineas } })
-diff --git a/src/routes/facturas.ts b/src/routes/facturas.ts
+diff --git a/src/routes/invoices.ts b/src/routes/invoices.ts
 index 3313189..12105df 100644
---- a/src/routes/facturas.ts
-+++ b/src/routes/facturas.ts
+--- a/src/routes/invoices.ts
++++ b/src/routes/invoices.ts
 @@ -14,9 +14,9 @@ const nuevaFacturaSchema = {
    additionalProperties: false,
    properties: {
@@ -199,10 +199,10 @@ index 3313189..12105df 100644
        maxItems: 100,
        items: {
          type: 'object',
-diff --git a/src/services/facturas.test.ts b/src/services/facturas.test.ts
+diff --git a/src/services/invoices.test.ts b/src/services/invoices.test.ts
 index b5af9d2..e005eaa 100644
---- a/src/services/facturas.test.ts
-+++ b/src/services/facturas.test.ts
+--- a/src/services/invoices.test.ts
++++ b/src/services/invoices.test.ts
 @@ -41,6 +41,23 @@ describe('crearFactura', () => {
    })
  })
@@ -227,10 +227,10 @@ index b5af9d2..e005eaa 100644
  describe('obtenerFactura', () => {
    it('lanza FACTURA_NO_ENCONTRADA si no existe', async () => {
      await expect(obtenerFactura(db, 'nada')).rejects.toBeInstanceOf(AppError)
-diff --git a/src/services/facturas.ts b/src/services/facturas.ts
+diff --git a/src/services/invoices.ts b/src/services/invoices.ts
 index 6dca644..cea9210 100644
---- a/src/services/facturas.ts
-+++ b/src/services/facturas.ts
+--- a/src/services/invoices.ts
++++ b/src/services/invoices.ts
 @@ -1,6 +1,6 @@
  import type { Db } from '../lib/db.js'
  import { AppError } from '../lib/errors.js'

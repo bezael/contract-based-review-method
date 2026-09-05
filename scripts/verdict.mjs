@@ -1,199 +1,186 @@
 #!/usr/bin/env node
-// El veredicto.
+// The verdict runner.
 //
-//   pnpm verdict specs/<slug>/spec.md            ejecuta cada criterio y comprueba el alcance
-//   pnpm verdict                                 usa la spec de la rama actual (o SPEC=...)
-//   pnpm verdict --base origin/main              contra qué rama se calcula el diff (defecto: main)
-//   pnpm verdict --only-scope                    solo el alcance, sin ejecutar comandos
-//   pnpm verdict --write                         escribe la tabla en la sección "## Veredicto" de la spec
+//   pnpm verdict specs/<slug>/spec.md  runs each criterion and checks scope
+//   pnpm verdict                      uses the current branch's spec
+//   pnpm verdict --base origin/main   calculates the diff against a base branch
+//   pnpm verdict --only-scope         checks scope without running commands
+//   pnpm verdict --write              writes the report into the spec
 //
-// Sale con código 1 si algún criterio no pasa o hay ficheros fuera de alcance.
-// Es lo que lees en vez del diff.
+// Exits with code 1 when a criterion fails, scope is exceeded, or assertions
+// from existing tests were modified.
 import { execSync, spawnSync } from 'node:child_process'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { relative } from 'node:path'
-import { coincide, leerSpec, normalizar, ramaActual, rutaSpecActiva } from './lib/spec.mjs'
+import { matchesGlob, readSpec, normalizePath, currentBranch, activeSpecPath } from './lib/spec.mjs'
 
 const args = process.argv.slice(2)
-const flag = (nombre) => args.includes(nombre)
-const valor = (nombre, defecto) => {
-  const i = args.indexOf(nombre)
-  return i === -1 ? defecto : args[i + 1]
+const hasFlag = (name) => args.includes(name)
+const getOption = (name, defaultValue) => {
+  const index = args.indexOf(name)
+  return index === -1 ? defaultValue : args[index + 1]
 }
-const rutaSpec = args.find((a) => !a.startsWith('--') && a.endsWith('.md')) ?? rutaSpecActiva()
+const specPath = args.find((arg) => !arg.startsWith('--') && arg.endsWith('.md')) ?? activeSpecPath()
 
-if (!rutaSpec) {
-  console.error('No encuentro la spec. Pásala como argumento: pnpm verdict specs/<slug>/spec.md')
+if (!specPath) {
+  console.error('Spec not found. Pass it as an argument: pnpm verdict specs/<slug>/spec.md')
   process.exit(2)
 }
 
-const spec = leerSpec(rutaSpec)
-const rama = ramaActual() ?? '(sin git)'
-const base = valor('--base', rama === 'main' ? 'HEAD' : 'main')
-const soloAlcance = flag('--only-scope')
+const spec = readSpec(specPath)
+const branch = currentBranch() ?? '(no git)'
+const base = getOption('--base', branch === 'main' ? 'HEAD' : 'main')
+const scopeOnly = hasFlag('--only-scope')
 
-// ---------------------------------------------------------------------------
-// Ficheros cambiados: commits de la rama + working tree + no trackeados
-// ---------------------------------------------------------------------------
-function git(cmd) {
+// Changed files include branch commits, working-tree changes, and untracked files.
+function runGit(command) {
   try {
-    return execSync(cmd, { stdio: ['ignore', 'pipe', 'ignore'] }).toString().split(/\r?\n/).filter(Boolean)
+    return execSync(command, { stdio: ['ignore', 'pipe', 'ignore'] })
+      .toString()
+      .split(/\r?\n/)
+      .filter(Boolean)
   } catch {
     return []
   }
 }
 
-const cambiados = new Set([
-  ...(base === 'HEAD' ? [] : git(`git diff --name-only ${base}...HEAD`)),
-  ...git('git diff --name-only HEAD'),
-  ...git('git ls-files --others --exclude-standard'),
-].map(normalizar))
+const changedFiles = new Set([
+  ...(base === 'HEAD' ? [] : runGit(`git diff --name-only ${base}...HEAD`)),
+  ...runGit('git diff --name-only HEAD'),
+  ...runGit('git ls-files --others --exclude-standard'),
+].map(normalizePath))
 
-const carpetaSpec = normalizar(relative(process.cwd(), rutaSpec)).replace(/\/spec\.md$/, '')
-// La propia spec, su carpeta y la memoria del proyecto siempre están en alcance.
-const alcance = [...spec.alcance, `${carpetaSpec}/**`, 'specs/INDEX.md']
+const specDirectory = normalizePath(relative(process.cwd(), specPath)).replace(/\/spec\.md$/, '')
+// The active spec, its directory, and project memory are always in scope.
+const allowedScope = [...spec.scope, `${specDirectory}/**`, 'specs/INDEX.md']
 
-const fueraDeAlcance = [...cambiados].filter((f) => !coincide(f, alcance))
-const dentro = [...cambiados].filter((f) => coincide(f, alcance))
+const outOfScope = [...changedFiles].filter((file) => !matchesGlob(file, allowedScope))
+const inScope = [...changedFiles].filter((file) => matchesGlob(file, allowedScope))
 
-// ---------------------------------------------------------------------------
-// Asserts existentes: el examinado no corrige su propio examen.
-// Cualquier línea con `expect(` que desaparezca o cambie en un test que ya
-// existía es una cláusula rota, aunque la suite esté en verde.
-// ---------------------------------------------------------------------------
-function assertsModificados() {
+// Existing assertions are part of the examination and must not be changed.
+function findModifiedAssertions() {
   const diffs = [
-    ...(base === 'HEAD' ? [] : git(`git diff --unified=0 ${base}...HEAD -- "*.test.ts"`)),
-    ...git('git diff --unified=0 HEAD -- "*.test.ts"'),
+    ...(base === 'HEAD' ? [] : runGit(`git diff --unified=0 ${base}...HEAD -- "*.test.ts"`)),
+    ...runGit('git diff --unified=0 HEAD -- "*.test.ts"'),
   ]
-  const resultado = []
-  let fichero = ''
-  for (const linea of diffs) {
-    if (linea.startsWith('--- a/')) fichero = normalizar(linea.slice(6))
-    else if (linea.startsWith('-') && !linea.startsWith('---') && /\bexpect\s*\(/.test(linea)) {
-      resultado.push({ fichero, linea: linea.slice(1).trim() })
+  const assertions = []
+  let file = ''
+  for (const line of diffs) {
+    if (line.startsWith('--- a/')) file = normalizePath(line.slice(6))
+    else if (line.startsWith('-') && !line.startsWith('---') && /\bexpect\s*\(/.test(line)) {
+      assertions.push({ file, line: line.slice(1).trim() })
     }
   }
-  return resultado
+  return assertions
 }
-const assertsRotos = assertsModificados()
 
-// ---------------------------------------------------------------------------
-// Criterios: ejecutar cada comando
-// ---------------------------------------------------------------------------
-const resultados = []
-if (!soloAlcance) {
-  for (const criterio of spec.criterios) {
-    if (!criterio.comando) {
-      resultados.push({ ...criterio, estado: 'MANUAL', ms: 0, salida: '' })
+const modifiedAssertions = findModifiedAssertions()
+
+const results = []
+if (!scopeOnly) {
+  for (const criterion of spec.acceptanceCriteria) {
+    if (!criterion.command) {
+      results.push({ ...criterion, status: 'MANUAL', elapsedMs: 0, output: '' })
       continue
     }
-    const inicio = Date.now()
-    const proceso = spawnSync(criterio.comando, { shell: true, encoding: 'utf8', stdio: 'pipe' })
-    const ms = Date.now() - inicio
-    const completa = `${proceso.stdout ?? ''}${proceso.stderr ?? ''}`
-    let salida = completa.trim().split(/\r?\n/).slice(-12).join('\n')
-    let estado = proceso.status === 0 ? 'PASA' : 'NO PASA'
-    // Vitest sale con 0 cuando el filtro -t no encuentra ningún test. Eso no
-    // es un PASA: es un criterio que nadie ha comprobado.
-    if (estado === 'PASA' && /vitest/.test(criterio.comando) && !/Tests\s+\d+\s+passed/.test(completa)) {
-      estado = 'NO PASA'
-      salida = 'El comando no ejecutó ningún test: el filtro -t no coincide con ningún nombre. Escribe el test antes de dar el criterio por cumplido.'
+
+    const startedAt = Date.now()
+    const commandResult = spawnSync(criterion.command, { shell: true, encoding: 'utf8', stdio: 'pipe' })
+    const elapsedMs = Date.now() - startedAt
+    const combinedOutput = `${commandResult.stdout ?? ''}${commandResult.stderr ?? ''}`
+    let output = combinedOutput.trim().split(/\r?\n/).slice(-12).join('\n')
+    let status = commandResult.status === 0 ? 'PASS' : 'FAIL'
+
+    // Vitest exits with 0 when a -t filter matches no tests. That is not a pass.
+    if (status === 'PASS' && /vitest/.test(criterion.command) && !/Tests\s+\d+\s+passed/.test(combinedOutput)) {
+      status = 'FAIL'
+      output = 'The command ran no tests: the -t filter matched no test name.'
     }
-    resultados.push({
-      ...criterio,
-      estado,
-      codigo: proceso.status,
-      ms,
-      salida,
+
+    results.push({
+      ...criterion,
+      status,
+      exitCode: commandResult.status,
+      elapsedMs,
+      output,
     })
   }
 }
 
-// ---------------------------------------------------------------------------
-// Informe
-// ---------------------------------------------------------------------------
-const segundos = (ms) => `${(ms / 1000).toFixed(1)}s`
-const pad = (s, n) => String(s).padEnd(n)
+const formatSeconds = (milliseconds) => `${(milliseconds / 1000).toFixed(1)}s`
+const pad = (value, width) => String(value).padEnd(width)
 
 console.log('')
-console.log(`VEREDICTO · ${spec.titulo}`)
-console.log(`Spec: ${normalizar(relative(process.cwd(), rutaSpec))} · Rama: ${rama} · Base: ${base}`)
+console.log(`VERDICT · ${spec.title}`)
+console.log(`Spec: ${normalizePath(relative(process.cwd(), specPath))} · Branch: ${branch} · Base: ${base}`)
 console.log('')
 
-if (!soloAlcance) {
-  console.log('Criterios de aceptación')
-  if (resultados.length === 0) {
-    console.log('  (la spec no tiene criterios con comando: no hay nada que un proceso pueda rechazar)')
-  }
-  for (const r of resultados) {
-    console.log(`  ${pad(r.numero, 3)}${pad(r.estado, 9)}${pad(segundos(r.ms), 7)} ${r.criterio}`)
-    if (r.estado === 'NO PASA') {
-      console.log(`       ↳ ${r.comando}  (exit ${r.codigo})`)
-      for (const linea of r.salida.split('\n')) console.log(`         ${linea}`)
+if (!scopeOnly) {
+  console.log('Acceptance criteria')
+  if (results.length === 0) console.log('  (the spec has no executable acceptance criteria)')
+  for (const result of results) {
+    console.log(`  ${pad(result.number, 3)}${pad(result.status, 9)}${pad(formatSeconds(result.elapsedMs), 7)} ${result.criterion}`)
+    if (result.status === 'FAIL') {
+      console.log(`       ↳ ${result.command} (exit ${result.exitCode})`)
+      for (const line of result.output.split('\n')) console.log(`         ${line}`)
     }
-    if (r.estado === 'MANUAL') {
-      console.log('       ↳ sin comando: este criterio lo revisa una persona. Cuenta como intención, no como cláusula.')
-    }
+    if (result.status === 'MANUAL') console.log('       ↳ no command: this criterion requires manual review.')
   }
   console.log('')
 }
 
-console.log(`Alcance de modificación (${cambiados.size} ficheros cambiados)`)
-for (const f of dentro) console.log(`  DENTRO   ${f}`)
-for (const f of fueraDeAlcance) console.log(`  FUERA    ${f}   ← no está en el alcance de la spec`)
-if (cambiados.size === 0) console.log('  (sin cambios respecto a la base)')
+console.log(`Scope (${changedFiles.size} changed files)`)
+for (const file of inScope) console.log(`  IN_SCOPE      ${file}`)
+for (const file of outOfScope) console.log(`  OUT_OF_SCOPE  ${file} ← not included in the spec scope`)
+if (changedFiles.size === 0) console.log('  (no changes relative to the base)')
 console.log('')
 
-console.log('Asserts de tests existentes')
-if (assertsRotos.length === 0) console.log('  INTACTOS')
-for (const a of assertsRotos) console.log(`  MODIFICADO  ${a.fichero}: ${a.linea}`)
+console.log('Existing test assertions')
+if (modifiedAssertions.length === 0) console.log('  UNCHANGED')
+for (const assertion of modifiedAssertions) console.log(`  MODIFIED  ${assertion.file}: ${assertion.line}`)
 console.log('')
 
-const incumplidos = resultados.filter((r) => r.estado === 'NO PASA').length
-const manuales = resultados.filter((r) => r.estado === 'MANUAL').length
-const pasa = incumplidos === 0 && fueraDeAlcance.length === 0 && assertsRotos.length === 0
+const failedCriteria = results.filter((result) => result.status === 'FAIL').length
+const manualCriteria = results.filter((result) => result.status === 'MANUAL').length
+const passed = failedCriteria === 0 && outOfScope.length === 0 && modifiedAssertions.length === 0
 
-const partes = []
-if (incumplidos) partes.push(`${incumplidos} criterio${incumplidos > 1 ? 's' : ''} incumplido${incumplidos > 1 ? 's' : ''}`)
-if (fueraDeAlcance.length) partes.push(`${fueraDeAlcance.length} fichero${fueraDeAlcance.length > 1 ? 's' : ''} fuera de alcance`)
-if (assertsRotos.length) partes.push(`${assertsRotos.length} assert${assertsRotos.length > 1 ? 's' : ''} existente${assertsRotos.length > 1 ? 's' : ''} modificado${assertsRotos.length > 1 ? 's' : ''}`)
-if (manuales) partes.push(`${manuales} criterio${manuales > 1 ? 's' : ''} manual${manuales > 1 ? 'es' : ''}`)
+const summary = []
+if (failedCriteria) summary.push(`${failedCriteria} failed criterion${failedCriteria > 1 ? 's' : ''}`)
+if (outOfScope.length) summary.push(`${outOfScope.length} file${outOfScope.length > 1 ? 's' : ''} out of scope`)
+if (modifiedAssertions.length) summary.push(`${modifiedAssertions.length} existing assertion${modifiedAssertions.length > 1 ? 's' : ''} modified`)
+if (manualCriteria) summary.push(`${manualCriteria} manual criterion${manualCriteria > 1 ? 's' : ''}`)
 
-console.log(`Resultado: ${pasa ? 'PASA' : 'NO PASA'}${partes.length ? ' · ' + partes.join(' · ') : ''}`)
+console.log(`Result: ${passed ? 'PASS' : 'FAIL'}${summary.length ? ' · ' + summary.join(' · ') : ''}`)
 console.log('')
 
-// ---------------------------------------------------------------------------
-// --write: dejar el veredicto en la spec, para que la PR lo enlace
-// ---------------------------------------------------------------------------
-if (flag('--write')) {
-  const fecha = new Date().toISOString().slice(0, 16).replace('T', ' ')
-  const filas = resultados
-    .map((r) => `| ${r.numero} | ${r.criterio} | ${r.estado} | ${r.comando ? `\`${r.comando}\` → exit ${r.codigo ?? '-'} (${segundos(r.ms)})` : 'revisión manual'} |`)
+// --write stores the report in the spec while preserving the contract heading.
+if (hasFlag('--write')) {
+  const generatedAt = new Date().toISOString().slice(0, 16).replace('T', ' ')
+  const rows = results
+    .map((result) => `| ${result.number} | ${result.criterion} | ${result.status} | ${result.command ? `\`${result.command}\` → exit ${result.exitCode ?? '-'} (${formatSeconds(result.elapsedMs)})` : 'manual review'} |`)
     .join('\n')
-  const bloque = [
+  const report = [
     '## Veredicto',
     '',
-    `> Generado por \`pnpm verdict --write\` el ${fecha} UTC · rama \`${rama}\` · base \`${base}\``,
+    `> Generated by \`pnpm verdict --write\` on ${generatedAt} UTC · branch \`${branch}\` · base \`${base}\``,
     '',
-    '| # | Criterio | Estado | Evidencia |',
+    '| # | Criterion | Status | Evidence |',
     '|---|---|---|---|',
-    filas || '| - | (sin criterios ejecutables) | - | - |',
+    rows || '| - | (no executable acceptance criteria) | - | - |',
     '',
-    `**Alcance:** ${fueraDeAlcance.length === 0 ? 'todos los cambios dentro del alcance' : `fuera de alcance: ${fueraDeAlcance.map((f) => `\`${f}\``).join(', ')}`}`,
-    `**Asserts existentes:** ${assertsRotos.length === 0 ? 'intactos' : `${assertsRotos.length} modificados`}`,
-    `**Resultado:** ${pasa ? 'PASA' : 'NO PASA'}`,
+    `**Scope:** ${outOfScope.length === 0 ? 'all changes are in scope' : `out of scope: ${outOfScope.map((file) => `\`${file}\``).join(', ')}`}`,
+    `**Existing assertions:** ${modifiedAssertions.length === 0 ? 'unchanged' : `${modifiedAssertions.length} modified`}`,
+    `**Result:** ${passed ? 'PASS' : 'FAIL'}`,
     '',
   ].join('\n')
 
-  const original = readFileSync(rutaSpec, 'utf8')
-  // Desde "## Veredicto" hasta la siguiente sección o el final del fichero.
-  const patron = /^## Veredicto\b[\s\S]*?(?=\n## |$(?![\s\S]))/m
-  const actualizado = patron.test(original)
-    ? original.replace(patron, bloque.trimEnd())
-    : `${original.trimEnd()}\n\n${bloque}`
-  writeFileSync(rutaSpec, actualizado)
-  console.log(`Veredicto escrito en ${normalizar(relative(process.cwd(), rutaSpec))}`)
+  const original = readFileSync(specPath, 'utf8')
+  const verdictSection = /^## Veredicto\b[\s\S]*?(?=\n## |$(?![\s\S]))/m
+  const updated = verdictSection.test(original)
+    ? original.replace(verdictSection, report.trimEnd())
+    : `${original.trimEnd()}\n\n${report}`
+  writeFileSync(specPath, updated)
+  console.log(`Verdict written to ${normalizePath(relative(process.cwd(), specPath))}`)
 }
 
-process.exit(pasa ? 0 : 1)
+process.exit(passed ? 0 : 1)

@@ -46,7 +46,7 @@ Informe: PASA | CAMBIOS NECESARIOS
 /revision-codigo
 ```
 
-**Codex / Cursor / Gemini CLI**: sesión nueva y pegar `prompts/revision-codigo.md`.
+**Codex / Cursor / Gemini CLI**: sesión nueva y pegar `prompts/code-review.md`.
 
 **GitHub** (opcional): el mismo prompt como acción sobre `pull_request`,
 o un bot de review con `AGENTS.md` y la spec como contexto. La salida va como

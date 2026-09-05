@@ -34,10 +34,10 @@ importe descontado, y los totales ya reflejan el descuento.
 - `prisma/schema.prisma` y una migración nueva: columnas `descuentoBps` y
   `descuentoCent` en `Factura`. **Límite de AGENTS.md: lo autoriza quien
   firma la spec.**
-- `src/services/facturas.ts`
-- `src/routes/facturas.ts`
-- `src/services/facturas.test.ts`
-- `src/routes/facturas.test.ts`
+- `src/services/invoices.ts`
+- `src/routes/invoices.ts`
+- `src/services/invoices.test.ts`
+- `src/routes/invoices.test.ts`
 
 ## Contexto
 
