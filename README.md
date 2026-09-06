@@ -1,6 +1,7 @@
 # Revisión por Contrato · repositorio del workshop
 
-**SDD + Agentic Engineering** · Bezael Pérez · [Dominicode](https://dominicode.com)
+**Contract-based review method** · SDD + Agentic Engineering · Bezael Pérez ·
+[Dominicode](https://dominicode.com)
 
 Del GitHub Issue a una Pull Request verificada con agentes, sin leer las
 cuatrocientas líneas que generó el agente. Este es el repositorio sobre el
@@ -15,6 +16,55 @@ Contrato  ->  Carril  ->  Veredicto
 Firmas un contrato de cuarenta líneas antes de que el agente escriba nada. El
 carril lo mantiene dentro de lo que firmaste. La verificación emite el
 veredicto, y tú lees el veredicto en vez del diff.
+
+## El método
+
+*Contract-based review* — Revisión por Contrato. La idea entera cabe en una
+frase:
+
+> **Un contrato es una especificación contra la que algo puede fallar.**
+
+Una spec describe lo que quieres. Un contrato se puede incumplir: termina en un
+comando que sale con código distinto de cero y en un CI en rojo. Si tu documento
+no tiene ni una sola cláusula capaz de rechazar el trabajo del agente sin que
+intervengas tú, no es un contrato. Es una sugerencia muy bien escrita.
+
+Lo que separa una cláusula de una intención no es el nivel de detalle: es que
+**nombra al verificador**. *"El endpoint debe ser rápido"* no nombra a nadie.
+*"p95 por debajo de 200 ms en el test de carga del CI"* nombra al test de carga
+del CI, y en cuanto lo nombras existe alguien que no eres tú con autoridad para
+decir que no.
+
+La prueba de una línea, aplicable a cualquier renglón de cualquier spec tuya:
+
+> ¿Puedo escribir algo que compruebe esto sin mí?
+
+Sí es una cláusula. No es una intención. Las intenciones orientan al agente y
+algo aportan, pero no rechazan nada, y no puedes apoyarte en ellas para dejar de
+leer el diff entero.
+
+### Las tres piezas
+
+| Pieza | Qué responde | Dónde vive en este repo |
+|---|---|---|
+| **Contrato** | Qué hay que construir, en términos comprobables | [`AGENTS.md`](AGENTS.md) (permanente) · [`specs/`](specs/spec.template.md) (de esta tarea) |
+| **Carril** | Por dónde no puede salirse | [`.claude/hooks/guard-boundaries.mjs`](.claude/hooks/guard-boundaries.mjs) · los límites de `AGENTS.md` · CI |
+| **Veredicto** | Cómo sabemos que está bien | [`scripts/verdict.mjs`](scripts/verdict.mjs) → `pnpm verdict` |
+
+El carril vive en tres capas y conviene no confundirlas: **declarado** —lo que
+pone en `AGENTS.md`, la capa barata, y la que quita la mayoría de las
+desviaciones—, **impedido** —permisos y hooks que rechazan la escritura antes
+de que ocurra— y **detectado** —el CI y la protección de rama, lo único que no
+depende de la buena voluntad de nadie—. Un fichero markdown no le pone puertas
+a un proceso con acceso de escritura a tu disco: por eso hay tres y no una.
+
+Y un veredicto no es una opinión. Una opinión es un linter que sugiere, o tú
+diciendo *"bueno, tiene buena pinta"* a las once de la noche. Un veredicto
+termina en dos estados y ninguno más: pasa o no pasa. `pnpm verdict` sale con
+código distinto de cero y nombra **qué cláusula** se rompió.
+
+Nada de esto hace que el agente escriba mejor código. Hace que el fallo llegue
+nombrado, temprano y barato, en vez de anónimo, tarde y a tu costa.
 
 ## El workshop
 
