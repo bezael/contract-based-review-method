@@ -1,104 +1,116 @@
 # AGENTS.md
 
-API de facturación interna. Emite y consulta facturas para el equipo de
-operaciones. No es pública: todo el tráfico entra por el gateway, así que no
-hay autenticación ni rate limiting aquí, y no hay que añadirlos.
+Internal invoicing API. It issues and queries invoices for the operations team.
+It is not public: all traffic comes through the gateway, so there is no
+authentication or rate limiting here, and none should be added.
 
-Es el repositorio del workshop **SDD + Agentic Engineering · Revisión por
-Contrato** (Dominicode). Este fichero es el contrato permanente del repo. El
-contrato de cada tarea vive en `specs/<slug>/spec.md`.
+This is the repository for the **SDD + Agentic Engineering · Contract-Based
+Review** workshop (Dominicode). This file is the permanent contract of the repo.
+Each task's contract lives in `specs/<slug>/spec.md`.
 
 ## Stack
 
-- **Lenguaje:** TypeScript 6.0, Node 24 LTS, ESM (`"type": "module"`, imports con extensión `.js`)
+- **Language:** TypeScript 6.0, Node 24 LTS, ESM (`"type": "module"`, imports with the `.js` extension)
 - **Framework:** Fastify 5
-- **Gestor de paquetes:** pnpm 11 — derivado de `pnpm-lock.yaml`. No uses otro.
-- **Base de datos:** SQLite vía Prisma 7 con el adaptador `better-sqlite3`. Fichero local en `data/`, sin servicios externos.
-- **Tests:** Vitest 4, en dos proyectos: `unit` (lib y servicios) y `api` (rutas con `inject`)
-- **Lint:** ESLint 10 con `typescript-eslint`, configuración plana en `eslint.config.js`
+- **Package manager:** pnpm 11 — derived from `pnpm-lock.yaml`. Do not use another.
+- **Database:** SQLite through Prisma 7 with the `better-sqlite3` adapter. Local file in `data/`, no external services.
+- **Tests:** Vitest 4, in two projects: `unit` (lib and services) and `api` (routes via `inject`)
+- **Lint:** ESLint 10 with `typescript-eslint`, flat config in `eslint.config.js`
 
-## Cómo se trabaja
+## How we work
 
-1. Toda tarea nace de un Issue y se firma en `specs/<slug>/spec.md` antes de
-   tocar código (plantilla en `specs/spec.template.md`).
-2. La rama se llama `feat/<slug>`, `fix/<slug>` o `refactor/<slug>`. El slug es
-   el de la carpeta de la spec: así el carril y el veredicto saben qué contrato aplica.
-3. Se implementa solo lo que la spec pide, dentro de su alcance de modificación.
-4. Antes de abrir la PR: `pnpm verdict specs/<slug>/spec.md --write`. Lo que
-   sale ahí es lo que lee la persona que revisa, en vez del diff.
-5. Al cambiar de rama, `pnpm db:generate`. El cliente de Prisma generado no
-   está en git; si es de otro esquema, los tests fallan con "no such column".
+1. Every task starts from an Issue and is signed off in `specs/<slug>/spec.md`
+   before any code is written (template in `specs/spec.template.md`).
+2. The branch is named `feat/<slug>`, `fix/<slug>` or `refactor/<slug>`. The slug
+   is the spec folder's: that is how the guardrail and the verdict know which
+   contract applies.
+3. Implement only what the spec asks for, inside its modification scope.
+4. Before opening the PR: `pnpm verdict specs/<slug>/spec.md --write`. What comes
+   out of it is what the reviewer reads, instead of the diff.
+5. After switching branches, `pnpm db:generate`. The generated Prisma client is
+   not in git; if it belongs to another schema, the tests fail with "no such column".
 
-## Verificación
+## Verification
 
-Estos comandos están ejecutados y comprobados. Son el harness: si uno falla,
-el trabajo no está hecho. Tiempos medidos en caliente en un portátil; la
-primera ejecución tarda el doble.
+These commands have been run and checked. They are the harness: if one fails,
+the work is not done. Times measured warm on a laptop; the first run takes twice
+as long.
 
-### Bucle corto — después de cada cambio
+### Short loop — after every change
 
 ```bash
 pnpm typecheck      # 3s   tsc --noEmit
 pnpm lint           # 3s   eslint .
-pnpm test:unit      # 2s   vitest, proyecto unit
+pnpm test:unit      # 2s   vitest, unit project
 ```
 
-### Bucle largo — antes de abrir la PR
+### Long loop — before opening the PR
 
 ```bash
 pnpm build          # 3s   tsc -p tsconfig.build.json -> dist/
 pnpm test           # 5s   vitest, unit + api
-pnpm smoke          # 3s   arranca la app en un puerto libre y pide /health
+pnpm smoke          # 3s   boots the app on a free port and hits /health
 ```
 
-### Veredicto de la tarea
+### Task verdict
 
 ```bash
-pnpm verdict specs/<slug>/spec.md       # ejecuta cada criterio de la spec y comprueba el alcance
-pnpm verdict:scope                      # solo el alcance, sin ejecutar nada
+pnpm verdict specs/<slug>/spec.md       # runs every criterion in the spec and checks the scope
+pnpm verdict:scope                      # scope only, running nothing
 ```
 
-### Rojos conocidos
+### Known reds
 
-Ninguno. Todo el harness está en verde a fecha de 4 de septiembre de 2026.
-Si algo falla, lo rompiste tú.
+`pnpm typecheck` is red on `main` as of September 6, 2026: two TS2345 errors in
+`src/services/customers.ts:13` and `:27`, which throw the codes `RNC_DUPLICADO`
+and `CLIENTE_NO_ENCONTRADO` after the `ERROR_CODES` catalog was renamed to
+English keys. The rest of the harness is green. Anything else that fails, you
+broke it.
 
-## Convenciones
+## Conventions
 
-Detectadas leyendo el código, no impuestas desde fuera:
+Detected by reading the code, not imposed from outside:
 
-- Los handlers de `src/routes/` no hablan con Prisma. Pasan por un servicio en `src/services/`.
-- Todo error de dominio es un `AppError` de `src/lib/errors.ts`, con un código del catálogo `CODIGOS`. No se lanzan strings ni `Error` pelado: eso es un 500 y se investiga.
-- Los importes son enteros en céntimos en todo el código y en la base de datos. Entran y salen de la API como string decimal (`"1234.56"`) a través de `src/lib/money.ts`. Nunca `Float`.
-- Los estados de factura se acotan en `ESTADOS` (`src/services/invoices.ts`), no en el esquema: SQLite no tiene enums.
-- Los tests van junto al fichero que prueban, como `*.test.ts`. Cada fichero crea su propia SQLite en memoria con `crearDbDePrueba()`; no comparten estado.
-- Las fechas se guardan y se devuelven siempre en UTC, en ISO 8601.
-- La validación de entrada es JSON Schema en la ruta (`schema.body`). El servicio da por válida la forma y valida el dominio.
-- Identificadores de dominio en español (`crearFactura`, `emitirFactura`); los de infraestructura en inglés (`buildApp`, `db`).
+- Handlers in `src/routes/` do not talk to Prisma. They go through a service in `src/services/`.
+- Every domain error is an `AppError` from `src/lib/errors.ts`, with a code from the `ERROR_CODES` catalog. No strings and no bare `Error` get thrown: that is a 500 and it gets investigated.
+- Amounts are integer cents throughout the code and in the database. They enter and leave the API as a decimal string (`"1234.56"`) through `src/lib/money.ts`. Never `Float`.
+- Invoice statuses are constrained in `STATUSES` (`src/services/invoices.ts`), not in the schema: SQLite has no enums.
+- Tests live next to the file they test, as `*.test.ts`. Each file creates its own in-memory SQLite with `createTestDb()`; they share no state.
+- Dates are stored and returned in UTC, ISO 8601.
+- Input validation is JSON Schema in the route (`schema.body`). The service assumes the shape is valid and validates the domain.
+- The code is English (`buildApp`, `createInvoice`, `issueInvoice`). The public API stays Spanish: paths (`/clientes`, `/facturas/:id/emitir`), JSON fields (`nombre`, `rnc`, `numero`, `estado`, `lineas`) and error codes. `toDto()` in `src/services/invoices.ts` is where the two meet.
 
 ## Límites
 
-Sin permiso explícito en la spec de la tarea, el agente no toca:
+> The heading stays in Spanish on purpose: `boundaries()` in
+> `scripts/lib/spec.mjs` parses this literal section title. Rename it to
+> `## Boundaries` and the guardrail silently protects nothing.
 
-- `prisma/migrations/` ni `prisma/schema.prisma`. Una migración se revisa a mano, siempre.
-- `.github/workflows/` ni nada de despliegue.
-- `package.json` y `pnpm-lock.yaml`: no se añaden ni se actualizan dependencias. Si hace falta una, para y pregunta.
-- `.env`, `.env.*` ni ningún fichero con credenciales.
-- `src/lib/money.ts`. Es aritmética de céntimos y ya nos ha mordido dos veces.
-- `.claude/hooks/` y `scripts/verdict.mjs`: es el harness. Quien recibe el veredicto no edita a quien lo emite.
-- Los asserts de los tests que ya existen. Añadir tests nuevos, sí. Cambiar los que ya estaban, no: eso se corrige aparte y a mano.
+Without explicit permission in the task spec, the agent does not touch. One path
+per bullet: the hook only reads the first one on each line.
 
-Estos límites no son solo una señal: el hook `.claude/hooks/guard-boundaries.mjs`
-bloquea la escritura en las rutas de esta lista salvo que la spec activa las
-incluya en su alcance.
+- `prisma/migrations/` — a migration is always reviewed by hand.
+- `prisma/schema.prisma` — the schema changes with a person present.
+- `.github/workflows/` — CI and deployment.
+- `package.json` — no dependencies are added or updated. If one is needed, stop and ask.
+- `pnpm-lock.yaml` — same, and it does not get regenerated "along the way".
+- `.env*` — credentials. Covers `.env`, `.env.example` and any `.env.<whatever>`.
+- `src/lib/money.ts` — cent arithmetic, and it has bitten us twice already.
+- `.claude/hooks/` — the guardrail is not edited from inside.
+- `scripts/verdict.mjs` — whoever receives the verdict does not edit whoever issues it.
+- The assertions of tests that already exist. Adding new tests, yes. Changing the ones that were already there, no: that is fixed separately and by hand.
 
-## Definición de terminado
+These boundaries are not just a sign: the `.claude/hooks/guard-boundaries.mjs`
+hook blocks writes to the paths in this list unless the active spec includes them
+in its scope.
 
-Una tarea está terminada cuando:
+## Definition of done
 
-1. El bucle corto pasa en verde.
-2. El bucle largo pasa en verde.
-3. Cada criterio de aceptación de la spec tiene evidencia: qué comando lo demuestra y cuál fue su salida (`pnpm verdict --write`).
-4. El diff no contiene nada que la spec no pidiera.
+A task is done when:
 
-El punto 4 es el que más veces se olvida. Código de más es código sin contrato.
+1. The short loop passes green.
+2. The long loop passes green.
+3. Every acceptance criterion in the spec has evidence: which command proves it and what its output was (`pnpm verdict --write`).
+4. The diff contains nothing the spec did not request.
+
+Point 4 is the one most often missed. Extra code is code without a contract.

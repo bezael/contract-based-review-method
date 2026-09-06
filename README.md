@@ -155,6 +155,7 @@ Gemini CLI o cualquier agente con acceso al repo, los mismos flujos están en
 
 ```
 AGENTS.md                      contrato permanente: stack, verificación, convenciones, límites
+AGENTS.template.md             la misma plantilla en blanco, para llevártela a tu repo
 CLAUDE.md                      @AGENTS.md
 specs/
   spec.template.md             contrato de tarea: criterios con comando + alcance de modificación
