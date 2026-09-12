@@ -1,57 +1,58 @@
 #!/usr/bin/env node
-// El carril, segunda capa: impedido, no solo declarado.
+// The lane, second layer: prevented, not merely declared.
 //
-// Hook PreToolUse de Claude Code. Antes de cada Edit/Write comprueba si el
-// fichero está en los límites de AGENTS.md (sección "## Límites"). Si lo está,
-// solo lo deja pasar cuando la spec activa (specs/<slug>/spec.md, deducida de
-// la rama) lo incluye en su "Alcance de modificación". Si no, bloquea y explica.
+// Claude Code PreToolUse hook. Before every Edit/Write it checks whether the
+// file is inside the AGENTS.md boundaries (section "## Boundaries"). If it is,
+// it only lets the write through when the active spec (specs/<slug>/spec.md,
+// derived from the branch) lists it under "Modification scope". Otherwise it
+// blocks and explains why.
 //
-// Un AGENTS.md es una señal. Esto es una valla. Ver capítulo 4 del ebook.
+// An AGENTS.md is a sign. This is a fence. See chapter 4 of the ebook.
 import { readFileSync, existsSync } from 'node:fs'
 import { join, relative, isAbsolute } from 'node:path'
 import { matchesGlob, boundaries, readSpec, normalizePath, activeSpecPath } from '../../scripts/lib/spec.mjs'
 
-const raiz = process.env.CLAUDE_PROJECT_DIR ?? process.cwd()
+const root = process.env.CLAUDE_PROJECT_DIR ?? process.cwd()
 
-let entrada = ''
+let input = ''
 process.stdin.setEncoding('utf8')
-process.stdin.on('data', (trozo) => (entrada += trozo))
+process.stdin.on('data', (chunk) => (input += chunk))
 process.stdin.on('end', () => {
-  let datos
+  let payload
   try {
-    datos = JSON.parse(entrada)
+    payload = JSON.parse(input)
   } catch {
-    process.exit(0) // sin JSON no hay nada que comprobar
+    process.exit(0) // no JSON, nothing to check
   }
 
-  const rutaBruta = datos?.tool_input?.file_path ?? datos?.tool_input?.notebook_path
-  if (!rutaBruta) process.exit(0)
+  const rawPath = payload?.tool_input?.file_path ?? payload?.tool_input?.notebook_path
+  if (!rawPath) process.exit(0)
 
-  const ruta = normalizePath(isAbsolute(rutaBruta) ? relative(raiz, rutaBruta) : rutaBruta)
-  if (ruta.startsWith('..')) process.exit(0) // fuera del repo: no es asunto de este hook
+  const path = normalizePath(isAbsolute(rawPath) ? relative(root, rawPath) : rawPath)
+  if (path.startsWith('..')) process.exit(0) // outside the repo: not this hook's business
 
-  const rutaAgents = join(raiz, 'AGENTS.md')
-  if (!existsSync(rutaAgents)) process.exit(0)
-  const protegidos = boundaries(readFileSync(rutaAgents, 'utf8'))
+  const agentsPath = join(root, 'AGENTS.md')
+  if (!existsSync(agentsPath)) process.exit(0)
+  const protectedPaths = boundaries(readFileSync(agentsPath, 'utf8'))
 
-  if (!matchesGlob(ruta, protegidos)) process.exit(0)
+  if (!matchesGlob(path, protectedPaths)) process.exit(0)
 
-  const rutaSpec = activeSpecPath(raiz)
-  if (rutaSpec) {
-    const spec = readSpec(rutaSpec)
-    if (matchesGlob(ruta, spec.scope)) {
-      process.stderr.write(`Límite de AGENTS.md autorizado por la spec (${normalizePath(relative(raiz, rutaSpec))}): ${ruta}\n`)
+  const specPath = activeSpecPath(root)
+  if (specPath) {
+    const spec = readSpec(specPath)
+    if (matchesGlob(path, spec.scope)) {
+      process.stderr.write(`AGENTS.md boundary authorized by the spec (${normalizePath(relative(root, specPath))}): ${path}\n`)
       process.exit(0)
     }
   }
 
   process.stderr.write(
     [
-      `BLOQUEADO por el carril: "${ruta}" está en los límites de AGENTS.md.`,
-      rutaSpec
-        ? `La spec activa (${normalizePath(relative(raiz, rutaSpec))}) no lo incluye en "Alcance de modificación".`
-        : 'No hay spec activa para esta rama (specs/<slug>/spec.md).',
-      'Para y pregunta: si la tarea necesita tocar este fichero, hay que añadirlo al alcance de la spec, con una persona firmando el cambio.',
+      `BLOCKED by the lane: "${path}" is inside the AGENTS.md boundaries.`,
+      specPath
+        ? `The active spec (${normalizePath(relative(root, specPath))}) does not list it under "Modification scope".`
+        : 'There is no active spec for this branch (specs/<slug>/spec.md).',
+      'Stop and ask: if the task needs this file, it has to be added to the spec scope, with a person signing off on the change.',
     ].join('\n') + '\n',
   )
   process.exit(2)

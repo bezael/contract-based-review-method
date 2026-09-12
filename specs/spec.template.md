@@ -1,52 +1,44 @@
-# Spec: {{TÍTULO}}
+# Spec: {{TITLE}}
 
-> El contrato de la tarea. Se firma **antes** de escribir código.
-> Si no cabe en dos páginas, la tarea es demasiado grande: divídela.
->
-> Regla de una línea para cada criterio: *¿puedo escribir algo que compruebe esto sin mí?*
-> Si la respuesta es no, es una intención. Va en "Qué se quiere", no en la tabla.
+> Task contract. It is signed before delegating and it is what the verdict is
+> issued against. If something is not written here, it is not part of the task.
 
-**Issue:** #{{NÚMERO}} · {{URL}}
-**Fecha:** {{AAAA-MM-DD}}
-**Estado:** borrador | firmada | cerrada
+**Issue:** {{#N}} · {{link or path}}
+**Date:** {{YYYY-MM-DD}}
+**Status:** draft | signed | done
 
-## Qué se quiere
+## What we want
 
-{{Dos o tres frases. El resultado observable, no la implementación.}}
+{{Two or three lines. What changes for whoever uses the API, not how it is built.}}
 
-## Qué queda fuera
+## What is out of scope
 
-{{Lo que alguien podría suponer que está incluido y no lo está. Esta sección
-evita el 80 % del código innecesario. Si está vacía, no has pensado lo suficiente.}}
+- {{Everything nearby that this task does NOT touch. This section prevents more rework than the previous one.}}
 
-## Criterios de aceptación
+## Acceptance criteria
 
-Cada criterio lleva el comando que lo demuestra. Un criterio sin comando es una
-opinión, y las opiniones se revisan a mano, que es justo lo que queremos evitar.
+One row per criterion. The command in the third column is what `pnpm verdict`
+runs: if a criterion has no command, it is verified by hand and the verdict
+marks it MANUAL.
 
-| # | Criterio | Cómo se verifica |
+| # | Criterion | How it is verified |
 |---|---|---|
-| 1 | {{Comportamiento observable}} | `{{comando}}` |
-| 2 | {{Comportamiento observable}} | `{{comando}}` |
-| 3 | La suite existente sigue en verde sin tocar sus asserts | `pnpm test` |
-| 4 | Tipos y lint sin excepciones nuevas | `pnpm typecheck && pnpm lint` |
+| 1 | {{Observable behaviour, with concrete data}} | `pnpm vitest run path/to/file.test.ts -t "test name"` |
+| 2 | The existing suite stays green without touching its assertions | `pnpm test` |
+| 3 | Types and lint with no new exceptions | `pnpm typecheck && pnpm lint` |
 
-## Alcance de modificación
+## Modification scope
 
-Los ficheros que se espera tocar. Si el agente necesita salir de esta lista,
-para y pregunta. Un fichero de los límites de `AGENTS.md` solo puede aparecer
-aquí con una persona firmando el motivo.
+One path per bullet, in backticks. Anything outside this list makes the verdict
+fail, and the hook blocks it if it is also an AGENTS.md boundary.
 
-- `{{ruta}}`
-- `{{ruta}}`
-- `{{ruta}}.test.ts`
+- `src/{{...}}`
+- `src/{{...}}.test.ts`
 
-## Riesgos
+## Risks
 
-{{Qué podría romperse de lo que hoy funciona, y qué comando del harness lo
-detectaría. Si la respuesta es "ninguno lo detectaría", has encontrado un hueco
-en el harness: anótalo.}}
+- {{What could break and which criterion catches it.}}
 
-## Veredicto
+## Verdict
 
-> Lo rellena `pnpm verdict --write` al terminar. Es lo que se lee en vez del diff.
+> Filled in by `pnpm verdict --write` when the task is finished.

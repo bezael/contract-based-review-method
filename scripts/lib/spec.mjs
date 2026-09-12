@@ -21,7 +21,7 @@ export function getSection(markdown, title) {
 
 /** Parses acceptance-criteria rows from the contract table. */
 export function acceptanceCriteria(markdown) {
-  const text = getSection(markdown, 'Criterios de aceptación')
+  const text = getSection(markdown, 'Acceptance criteria')
   if (!text) return []
   const rows = []
   for (const line of text.split('\n')) {
@@ -38,14 +38,14 @@ export function acceptanceCriteria(markdown) {
 
 /** Parses modification-scope bullets. Globs are supported. */
 export function scope(markdown) {
-  const text = getSection(markdown, 'Alcance de modificación')
+  const text = getSection(markdown, 'Modification scope')
   if (!text) return []
   return [...text.matchAll(/^\s*-\s+`([^`]+)`/gm)].map((match) => normalizePath(match[1]))
 }
 
 /** Parses permanent AGENTS.md boundary bullets that contain a path. */
 export function boundaries(agentsMarkdown) {
-  const text = getSection(agentsMarkdown, 'Límites')
+  const text = getSection(agentsMarkdown, 'Boundaries')
   if (!text) return []
   return [...text.matchAll(/^\s*-\s+`([^`]+)`/gm)]
     .map((match) => normalizePath(match[1]))

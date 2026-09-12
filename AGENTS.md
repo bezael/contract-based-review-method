@@ -80,11 +80,10 @@ Detected by reading the code, not imposed from outside:
 - Input validation is JSON Schema in the route (`schema.body`). The service assumes the shape is valid and validates the domain.
 - The code is English (`buildApp`, `createInvoice`, `issueInvoice`). The public API stays Spanish: paths (`/clientes`, `/facturas/:id/emitir`), JSON fields (`nombre`, `rnc`, `numero`, `estado`, `lineas`) and error codes. `toDto()` in `src/services/invoices.ts` is where the two meet.
 
-## Límites
+## Boundaries
 
-> The heading stays in Spanish on purpose: `boundaries()` in
-> `scripts/lib/spec.mjs` parses this literal section title. Rename it to
-> `## Boundaries` and the guardrail silently protects nothing.
+> `boundaries()` in `scripts/lib/spec.mjs` parses this literal section title.
+> Rename the heading and the guardrail silently protects nothing.
 
 Without explicit permission in the task spec, the agent does not touch. One path
 per bullet: the hook only reads the first one on each line.
