@@ -1,45 +1,45 @@
-# [feat] Descuento por factura
+# [feat] Invoice discount
 
 Labels: feature, demo
 
-## Qué se quiere
+## What we want
 
-Al crear una factura se puede indicar un descuento en porcentaje entero
-(`descuentoPct`, de 0 a 100). El descuento se aplica sobre el subtotal, antes
-de calcular el ITBIS. La respuesta de la API incluye el porcentaje y el
-importe descontado, y los totales ya reflejan el descuento.
+When creating an invoice you can pass a whole-number percentage discount
+(`discountPct`, from 0 to 100). The discount applies to the subtotal, before
+tax is calculated. The API response includes the percentage and the discounted
+amount, and the totals already reflect the discount.
 
-## Qué queda fuera
+## What is out of scope
 
-- Descuentos por línea.
-- Cupones, códigos promocionales o descuentos por cliente.
-- Cambiar el descuento de una factura ya creada.
-- Descuentos en facturas ya emitidas.
+- Per-line discounts.
+- Coupons, promo codes or customer-level discounts.
+- Changing the discount of an invoice that already exists.
+- Discounts on invoices that have already been issued.
 
-## Criterios de aceptación (verificables)
+## Acceptance criteria (verifiable)
 
-- [ ] `POST /facturas` con `descuentoPct: 10` y líneas que suman `100.00`
-      devuelve `descuentoPct: 10`, `descuento: "10.00"`, `subtotal: "100.00"`,
-      `impuesto: "16.20"`, `total: "106.20"`.
-- [ ] Sin `descuentoPct` en el cuerpo, la factura devuelve `descuentoPct: 0`,
-      `descuento: "0.00"` y los mismos totales que hoy.
-- [ ] `descuentoPct` con valor `101`, `-1` o `12.5` devuelve `400 VALIDACION`.
-- [ ] El importe del descuento se redondea a mitad hacia arriba: subtotal
-      `0.05` con `descuentoPct: 10` descuenta `0.01`.
-- [ ] `GET /facturas/:id` devuelve los mismos campos de descuento que la creación.
-- [ ] La suite existente sigue en verde sin modificar sus asserts.
+- [ ] `POST /invoices` with `discountPct: 10` and lines adding up to `100.00`
+      returns `discountPct: 10`, `discount: "10.00"`, `subtotal: "100.00"`,
+      `tax: "16.20"`, `total: "106.20"`.
+- [ ] Without `discountPct` in the body, the invoice returns `discountPct: 0`,
+      `discount: "0.00"` and the same totals as today.
+- [ ] A `discountPct` of `101`, `-1` or `12.5` returns `400 VALIDATION`.
+- [ ] The discount amount rounds half up: subtotal `0.05` with
+      `discountPct: 10` discounts `0.01`.
+- [ ] `GET /invoices/:id` returns the same discount fields as creation does.
+- [ ] The existing suite stays green without modifying its assertions.
 
-## Alcance sugerido
+## Suggested scope
 
-- `prisma/schema.prisma` y una migración nueva: columnas `descuentoBps` y
-  `descuentoCent` en `Factura`. **Límite de AGENTS.md: lo autoriza quien
-  firma la spec.**
+- `prisma/schema.prisma` and a new migration: columns `discountBps` and
+  `discountCents` on `Invoice`. **AGENTS.md boundary: whoever signs the spec
+  authorizes it.**
 - `src/services/invoices.ts`
 - `src/routes/invoices.ts`
 - `src/services/invoices.test.ts`
 - `src/routes/invoices.test.ts`
 
-## Contexto
+## Context
 
-`src/lib/money.ts` ya tiene `porcentaje(centimos, bps)` con el redondeo
-correcto. No hace falta tocar ese fichero.
+`src/lib/money.ts` already has `percentage(cents, bps)` with the correct
+rounding. There is no need to touch that file.

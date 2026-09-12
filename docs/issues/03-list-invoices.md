@@ -1,37 +1,36 @@
-# [feat] Listar facturas con filtros y paginación
+# [feat] List invoices with filters and pagination
 
 Labels: feature
 
-## Qué se quiere
+## What we want
 
-`GET /facturas` devuelve las facturas más recientes primero, con filtros
-opcionales por `estado` y `clienteId`, y paginación con `pagina` (desde 1) y
-`porPagina` (por defecto 20, máximo 100). La respuesta incluye los datos de
-paginación para que el cliente sepa si hay más.
+`GET /invoices` returns the most recent invoices first, with optional filters by
+`status` and `customerId`, and pagination through `page` (starting at 1) and
+`perPage` (20 by default, 100 maximum). The response includes the pagination
+data so the client knows whether there is more.
 
-## Qué queda fuera
+## What is out of scope
 
-- Filtros por fecha o por importe.
-- Búsqueda por texto.
-- Ordenación configurable.
+- Filters by date or by amount.
+- Full-text search.
+- Configurable ordering.
 
-## Criterios de aceptación (verificables)
+## Acceptance criteria (verifiable)
 
-- [ ] `GET /facturas` sin parámetros devuelve `200` con `datos: [...]`
-      ordenadas por `creadoEn` descendente y `paginacion: { pagina: 1, porPagina: 20, total: N }`.
-- [ ] `?estado=ISSUED` devuelve solo facturas emitidas; un estado que no
-      existe en `ESTADOS` devuelve `400 VALIDACION`.
-- [ ] `?clienteId=<id>` devuelve solo las de ese cliente; un cliente sin
-      facturas devuelve lista vacía y `total: 0`, no 404.
-- [ ] `?pagina=2&porPagina=2` con 5 facturas devuelve exactamente las
-      facturas 3 y 4 del orden.
-- [ ] `porPagina=101` o `pagina=0` devuelven `400 VALIDACION`.
-- [ ] Cada elemento de `datos` tiene la misma forma que `GET /facturas/:id`
-      (mismo DTO), incluidas las líneas.
-- [ ] La suite existente sigue en verde sin modificar sus asserts.
+- [ ] `GET /invoices` with no parameters returns `200` with `data: [...]`
+      ordered by `createdAt` descending and `pagination: { page: 1, perPage: 20, total: N }`.
+- [ ] `?status=ISSUED` returns only issued invoices; a status that is not in
+      `STATUSES` returns `400 VALIDATION`.
+- [ ] `?customerId=<id>` returns only that customer's invoices; a customer with
+      no invoices returns an empty list and `total: 0`, not a 404.
+- [ ] `?page=2&perPage=2` with 5 invoices returns exactly invoices 3 and 4 of the order.
+- [ ] `perPage=101` or `page=0` return `400 VALIDATION`.
+- [ ] Every element of `data` has the same shape as `GET /invoices/:id`
+      (same DTO), lines included.
+- [ ] The existing suite stays green without modifying its assertions.
 
-## Alcance sugerido
+## Suggested scope
 
 - `src/services/invoices.ts`
 - `src/routes/invoices.ts`
-- Sus tests
+- Their tests

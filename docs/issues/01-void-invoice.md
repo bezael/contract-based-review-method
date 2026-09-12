@@ -1,31 +1,29 @@
-# [feat] Anular una factura emitida
+# [feat] Void an issued invoice
 
 Labels: feature
 
-## Qué se quiere
+## What we want
 
-Operaciones necesita anular facturas emitidas por error. Una factura
-`ISSUED` pasa a `VOIDED` con `POST /facturas/:id/anular`. Una factura
-anulada conserva su número (la numeración no puede tener huecos) y no se
-puede volver a emitir ni modificar.
+Operations needs to void invoices issued by mistake. An `ISSUED` invoice moves
+to `VOIDED` with `POST /invoices/:id/void`. A voided invoice keeps its number
+(numbering cannot have gaps) and can no longer be issued or modified.
 
-## Qué queda fuera
+## What is out of scope
 
-- Motivo de anulación y quién la anuló.
-- Anular borradores (un borrador se descarta, no se anula: fuera de este issue).
-- Notas de crédito (issue 09).
+- Reason for voiding and who voided it.
+- Voiding drafts (a draft is discarded, not voided: out of this issue).
+- Credit notes (issue 09).
 
-## Criterios de aceptación (verificables)
+## Acceptance criteria (verifiable)
 
-- [ ] `POST /facturas/:id/anular` sobre una factura `ISSUED` devuelve `200`
-      con `estado: "VOIDED"` y el mismo `numero` que tenía.
-- [ ] Sobre una factura `DRAFT`, `PAID` o `VOIDED` devuelve
-      `409 ESTADO_INVALIDO`.
-- [ ] Sobre un id inexistente devuelve `404 FACTURA_NO_ENCONTRADA`.
-- [ ] `POST /facturas/:id/emitir` sobre una `VOIDED` devuelve `409 ESTADO_INVALIDO`.
-- [ ] La suite existente sigue en verde sin modificar sus asserts.
+- [ ] `POST /invoices/:id/void` on an `ISSUED` invoice returns `200` with
+      `status: "VOIDED"` and the same `number` it had.
+- [ ] On a `DRAFT`, `PAID` or `VOIDED` invoice it returns `409 INVALID_STATUS`.
+- [ ] On an id that does not exist it returns `404 INVOICE_NOT_FOUND`.
+- [ ] `POST /invoices/:id/issue` on a `VOIDED` invoice returns `409 INVALID_STATUS`.
+- [ ] The existing suite stays green without modifying its assertions.
 
-## Alcance sugerido
+## Suggested scope
 
 - `src/services/invoices.ts`
 - `src/routes/invoices.ts`

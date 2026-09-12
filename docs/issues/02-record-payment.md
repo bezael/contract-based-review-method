@@ -1,35 +1,36 @@
-# [feat] Registrar pagos de una factura
+# [feat] Record payments against an invoice
 
 Labels: feature
 
-## Qué se quiere
+## What we want
 
-Registrar los cobros de una factura emitida. `POST /facturas/:id/pagos` con
-`{ "importe": "50.00" }` guarda el pago. Cuando la suma de pagos alcanza el
-total de la factura, la factura pasa a `PAID`. `GET /facturas/:id` incluye
-la lista de pagos y el importe pendiente.
+Record the money collected against an issued invoice. `POST /invoices/:id/payments`
+with `{ "amount": "50.00" }` stores the payment. When the payments add up to the
+invoice total, the invoice moves to `PAID`. `GET /invoices/:id` includes the list
+of payments and the outstanding amount.
 
-## Qué queda fuera
+## What is out of scope
 
-- Métodos de pago, referencias bancarias, conciliación.
-- Devoluciones o pagos negativos.
-- Pagos en borradores o anuladas.
+- Payment methods, bank references, reconciliation.
+- Refunds or negative payments.
+- Payments on drafts or voided invoices.
 
-## Criterios de aceptación (verificables)
+## Acceptance criteria (verifiable)
 
-- [ ] Un pago sobre una factura `ISSUED` devuelve `201` con el pago y el
-      `pendiente` actualizado.
-- [ ] Dos pagos que suman el total dejan la factura en `PAID` y `pendiente: "0.00"`.
-- [ ] Un pago que supera el pendiente devuelve `400 VALIDACION` y no se guarda.
-- [ ] Un pago sobre `DRAFT`, `PAID` o `VOIDED` devuelve `409 ESTADO_INVALIDO`.
-- [ ] `importe` con formato inválido (`"50"`, `"-1.00"`, `"abc"`) devuelve `400 VALIDACION`.
-- [ ] `GET /facturas/:id` devuelve `pagos: [...]` ordenados por fecha y `pendiente`.
-- [ ] La suite existente sigue en verde sin modificar sus asserts.
+- [ ] A payment on an `ISSUED` invoice returns `201` with the payment and the
+      updated `outstanding`.
+- [ ] Two payments adding up to the total leave the invoice at `PAID` and
+      `outstanding: "0.00"`.
+- [ ] A payment above the outstanding amount returns `400 VALIDATION` and is not stored.
+- [ ] A payment on `DRAFT`, `PAID` or `VOIDED` returns `409 INVALID_STATUS`.
+- [ ] An `amount` with an invalid format (`"50"`, `"-1.00"`, `"abc"`) returns `400 VALIDATION`.
+- [ ] `GET /invoices/:id` returns `payments: [...]` ordered by date, plus `outstanding`.
+- [ ] The existing suite stays green without modifying its assertions.
 
-## Alcance sugerido
+## Suggested scope
 
-- `prisma/schema.prisma` y una migración: tabla `Pago` (`id`, `facturaId`,
-  `importeCent`, `creadoEn`). **Límite de AGENTS.md: lo autoriza quien firma la spec.**
-- `src/services/invoices.ts` (o un `src/services/pagos.ts` nuevo)
+- `prisma/schema.prisma` and a migration: table `Payment` (`id`, `invoiceId`,
+  `amountCents`, `createdAt`). **AGENTS.md boundary: whoever signs the spec authorizes it.**
+- `src/services/invoices.ts` (or a new `src/services/payments.ts`)
 - `src/routes/invoices.ts`
-- Sus tests
+- Their tests

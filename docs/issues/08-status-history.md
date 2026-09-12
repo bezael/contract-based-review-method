@@ -1,40 +1,40 @@
-# [arquitectura] Historial de cambios de estado
+# [architecture] Status change history
 
-Labels: feature, arquitectura
+Labels: feature, architecture
 
-## Qué se quiere
+## What we want
 
-Auditoría exige saber cuándo cambió de estado cada factura. Cada transición
-(`DRAFT → ISSUED`, y las que existan: anulación, pago) deja un evento con
-el estado anterior, el nuevo y la fecha. `GET /facturas/:id/historial`
-devuelve la lista en orden cronológico.
+Audit needs to know when each invoice changed status. Every transition
+(`DRAFT → ISSUED`, and any others that exist: voiding, payment) leaves an event
+with the previous status, the new one and the date. `GET /invoices/:id/history`
+returns the list in chronological order.
 
-## Qué queda fuera
+## What is out of scope
 
-- Quién hizo el cambio (no hay usuarios en esta API).
-- Eventos que no sean cambios de estado.
-- Borrar o editar el historial.
+- Who made the change (this API has no users).
+- Events that are not status changes.
+- Deleting or editing the history.
 
-## Criterios de aceptación (verificables)
+## Acceptance criteria (verifiable)
 
-- [ ] Al crear una factura se registra un evento `null → DRAFT`.
-- [ ] Al emitir, un evento `DRAFT → ISSUED` con la misma fecha que `emitidaEn`.
-- [ ] `GET /facturas/:id/historial` devuelve los eventos ordenados por fecha
-      ascendente, con `de`, `a` y `fecha` en ISO UTC.
-- [ ] Sobre un id inexistente devuelve `404 FACTURA_NO_ENCONTRADA`.
-- [ ] La escritura del evento y el cambio de estado ocurren en la misma
-      transacción: si falla una, no queda la otra (test que fuerza el fallo).
-- [ ] La suite existente sigue en verde sin modificar sus asserts.
+- [ ] Creating an invoice records a `null → DRAFT` event.
+- [ ] Issuing records a `DRAFT → ISSUED` event with the same date as `issuedAt`.
+- [ ] `GET /invoices/:id/history` returns the events ordered by date ascending,
+      with `from`, `to` and `date` in ISO UTC.
+- [ ] On an id that does not exist it returns `404 INVOICE_NOT_FOUND`.
+- [ ] Writing the event and changing the status happen in the same transaction:
+      if one fails, the other is not left behind (a test that forces the failure).
+- [ ] The existing suite stays green without modifying its assertions.
 
-## Alcance sugerido
+## Suggested scope
 
-- `prisma/schema.prisma` y una migración: tabla `EventoFactura`.
-  **Límite de AGENTS.md: lo autoriza quien firma la spec.**
+- `prisma/schema.prisma` and a migration: table `InvoiceEvent`.
+  **AGENTS.md boundary: whoever signs the spec authorizes it.**
 - `src/services/invoices.ts`
 - `src/routes/invoices.ts`
-- Sus tests
+- Their tests
 
-## Contexto
+## Context
 
-Si ya se implementaron los issues 01 o 02, sus transiciones también generan
-evento. Si no, la spec lo deja fuera explícitamente.
+If issues 01 or 02 have already been implemented, their transitions generate an
+event too. If not, the spec leaves them out explicitly.

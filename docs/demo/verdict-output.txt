@@ -1,58 +1,56 @@
 $ node scripts/verdict.mjs
 
-VEREDICTO · Spec: Descuento por factura
-Spec: specs/descuento-factura/spec.md · Rama: feat/descuento-factura · Base: main
+VERDICT · Spec: Invoice discount
+Spec: specs/invoice-discount/spec.md · Branch: feat/invoice-discount · Base: chore/english-api-surface
 
-Criterios de aceptación
-  1  PASA     1.8s    `POST /facturas` con `descuentoPct: 10` y subtotal 100.00 devuelve `descuento: "10.00"`, `impuesto: "16.20"`, `total: "106.20"`
-  2  PASA     1.9s    Sin `descuentoPct`, devuelve `descuentoPct: 0`, `descuento: "0.00"` y los totales de siempre
-  3  PASA     1.8s    `descuentoPct` 101, -1 o 12.5 devuelve 400 VALIDACION
-  4  NO PASA  1.6s    El importe del descuento se redondea a mitad hacia arriba: 0.05 al 10 % descuenta 0.01
-       ↳ pnpm vitest run src/services/invoices.test.ts -t "redondea el descuento"  (exit 1)
+Acceptance criteria
+  1  PASS     2.4s    `POST /invoices` with `discountPct: 10` and subtotal 100.00 returns `discount: "10.00"`, `tax: "16.20"`, `total: "106.20"`
+  2  PASS     2.3s    Without `discountPct` it returns `discountPct: 0`, `discount: "0.00"` and the usual totals
+  3  PASS     2.3s    A `discountPct` of 101, -1 or 12.5 returns 400 VALIDATION
+  4  FAIL     2.0s    The discount amount rounds half up: 0.05 at 10 % discounts 0.01
+       ↳ pnpm vitest run src/services/invoices.test.ts -t "rounds the discount" (exit 1)
          - 1
          + 0
          
-          ❯ src/services/invoices.test.ts:55:35
-              53|     expect(factura.subtotalCent).toBe(5)
-              54|     expect(factura.descuentoBps).toBe(1000)
-              55|     expect(factura.descuentoCent).toBe(1)
+          ❯ src/services/invoices.test.ts:43:35
+              41|     expect(invoice.subtotalCents).toBe(5)
+              42|     expect(invoice.discountBps).toBe(1000)
+              43|     expect(invoice.discountCents).toBe(1)
                 |                                   ^
-              56|     expect(factura.impuestoCent).toBe(1) // 18 % de 4 céntimos = 0.72 …
-              57|     expect(factura.totalCent).toBe(5)
+              44|     expect(invoice.taxCents).toBe(1)
+              45|     expect(invoice.totalCents).toBe(5)
          
          ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
-  5  PASA     1.9s    `GET /facturas/:id` devuelve los mismos campos de descuento
-  6  NO PASA  2.5s    La suite existente sigue en verde sin tocar sus asserts
-       ↳ pnpm test  (exit 1)
+  5  PASS     2.3s    `GET /invoices/:id` returns the same discount fields
+  6  FAIL     3.1s    The existing suite stays green without touching its assertions
+       ↳ pnpm test (exit 1)
          - 1
          + 0
          
-          ❯ src/services/invoices.test.ts:55:35
-              53|     expect(factura.subtotalCent).toBe(5)
-              54|     expect(factura.descuentoBps).toBe(1000)
-              55|     expect(factura.descuentoCent).toBe(1)
+          ❯ src/services/invoices.test.ts:43:35
+              41|     expect(invoice.subtotalCents).toBe(5)
+              42|     expect(invoice.discountBps).toBe(1000)
+              43|     expect(invoice.discountCents).toBe(1)
                 |                                   ^
-              56|     expect(factura.impuestoCent).toBe(1) // 18 % de 4 céntimos = 0.72 …
-              57|     expect(factura.totalCent).toBe(5)
+              44|     expect(invoice.taxCents).toBe(1)
+              45|     expect(invoice.totalCents).toBe(5)
          
          ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
-  7  PASA     4.4s    Tipos y lint sin excepciones nuevas
+  7  PASS     5.4s    Types and lint with no new exceptions
 
-Alcance de modificación (9 ficheros cambiados)
-  DENTRO   prisma/migrations/20260904204716_descuento_factura/migration.sql
-  DENTRO   prisma/schema.prisma
-  DENTRO   specs/INDEX.md
-  DENTRO   specs/descuento-factura/spec.md
-  DENTRO   src/routes/invoices.test.ts
-  DENTRO   src/routes/invoices.ts
-  DENTRO   src/services/invoices.test.ts
-  DENTRO   src/services/invoices.ts
-  FUERA    src/lib/money.ts   ← no está en el alcance de la spec
+Scope (8 changed files)
+  IN_SCOPE      prisma/migrations/20260912120000_invoice_discount/migration.sql
+  IN_SCOPE      prisma/schema.prisma
+  IN_SCOPE      specs/invoice-discount/spec.md
+  IN_SCOPE      src/routes/invoices.test.ts
+  IN_SCOPE      src/routes/invoices.ts
+  IN_SCOPE      src/services/invoices.test.ts
+  IN_SCOPE      src/services/invoices.ts
+  OUT_OF_SCOPE  src/lib/money.ts ← not included in the spec scope
 
-Asserts de tests existentes
-  MODIFICADO  src/routes/invoices.test.ts: expect(respuesta.statusCode).toBe(400)
-  MODIFICADO  src/routes/invoices.test.ts: expect(respuesta.json().error).toBe('VALIDACION')
+Existing test assertions
+  MODIFIED  src/routes/invoices.test.ts: expect(response.statusCode).toBe(400)
+  MODIFIED  src/routes/invoices.test.ts: expect(response.json().error).toBe('VALIDATION')
 
-Resultado: NO PASA · 2 criterios incumplidos · 1 fichero fuera de alcance · 2 asserts existentes modificados
+Result: FAIL · 2 failed criteria · 1 file out of scope · 2 existing assertions modified
 
-[ELIFECYCLE] Command failed with exit code 1.

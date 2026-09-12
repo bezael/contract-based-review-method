@@ -1,33 +1,33 @@
-# [transversal] Identificador de petición en respuestas y logs
+# [cross-cutting] Request id in responses and logs
 
-Labels: refactor, observabilidad
+Labels: refactor, observability
 
-## Qué se quiere
+## What we want
 
-Soporte no puede correlacionar una queja de un cliente con los logs. Cada
-respuesta de la API lleva la cabecera `x-request-id`. Si la petición ya
-traía una, se respeta; si no, se genera. Todos los logs de esa petición
-incluyen el mismo identificador, y los errores `AppError` y los `500` lo
-devuelven también en el cuerpo (`requestId`).
+Support cannot correlate a customer complaint with the logs. Every API response
+carries an `x-request-id` header. If the request already came with one, it is
+respected; if not, one is generated. Every log line of that request includes the
+same identifier, and `AppError` responses and `500`s return it in the body too
+(`requestId`).
 
-## Qué queda fuera
+## What is out of scope
 
-- Trazas distribuidas, OpenTelemetry.
-- Cambiar el formato de los logs.
-- Añadir dependencias: Fastify ya genera un id por petición y ya usa pino.
+- Distributed tracing, OpenTelemetry.
+- Changing the log format.
+- Adding dependencies: Fastify already generates an id per request and already uses pino.
 
-## Criterios de aceptación (verificables)
+## Acceptance criteria (verifiable)
 
-- [ ] Toda respuesta (200, 201, 400, 404, 409, 500) incluye `x-request-id`.
-- [ ] Si la petición trae `x-request-id: abc-123`, la respuesta devuelve el mismo valor.
-- [ ] Un cuerpo de error incluye `requestId` con el mismo valor que la cabecera.
-- [ ] Un id entrante de más de 64 caracteres o con caracteres fuera de
-      `[A-Za-z0-9._-]` se descarta y se genera uno nuevo.
-- [ ] `pnpm typecheck && pnpm lint` en verde y `package.json` sin cambios.
-- [ ] La suite existente sigue en verde sin modificar sus asserts.
+- [ ] Every response (200, 201, 400, 404, 409, 500) includes `x-request-id`.
+- [ ] If the request carries `x-request-id: abc-123`, the response returns the same value.
+- [ ] An error body includes `requestId` with the same value as the header.
+- [ ] An incoming id longer than 64 characters, or with characters outside
+      `[A-Za-z0-9._-]`, is discarded and a new one is generated.
+- [ ] `pnpm typecheck && pnpm lint` green and `package.json` unchanged.
+- [ ] The existing suite stays green without modifying its assertions.
 
-## Alcance sugerido
+## Suggested scope
 
 - `src/app.ts`
 - `src/app.test.ts`
-- `src/routes/*.test.ts` solo si hace falta añadir un caso; los asserts existentes no se tocan.
+- `src/routes/*.test.ts` only if a case needs adding; existing assertions are not touched.

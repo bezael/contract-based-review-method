@@ -1,35 +1,35 @@
-# [feat] Líneas exentas de ITBIS
+# [feat] Tax-exempt lines
 
 Labels: feature
 
-## Qué se quiere
+## What we want
 
-Algunos servicios están exentos de ITBIS. Cada línea de factura acepta un
-campo opcional `exento: true`. El ITBIS se calcula solo sobre la suma de las
-líneas no exentas. La respuesta muestra, por línea, si está exenta, y en la
-factura el subtotal exento y el gravado.
+Some services are exempt from tax. Every invoice line accepts an optional
+`taxExempt: true` field. Tax is calculated only over the sum of the non-exempt
+lines. The response shows, per line, whether it is exempt, and on the invoice
+the exempt and the taxable subtotals.
 
-## Qué queda fuera
+## What is out of scope
 
-- Tipos de impuesto distintos del ITBIS general.
-- Cambiar la exención de una línea después de crear la factura.
-- Exención por cliente.
+- Tax rates other than the general one.
+- Changing a line's exemption after the invoice is created.
+- Customer-level exemption.
 
-## Criterios de aceptación (verificables)
+## Acceptance criteria (verifiable)
 
-- [ ] Factura con una línea de `100.00` exenta y otra de `100.00` gravada
-      devuelve `subtotal: "200.00"`, `baseGravada: "100.00"`, `baseExenta: "100.00"`,
-      `impuesto: "18.00"`, `total: "218.00"`.
-- [ ] Sin `exento` en la línea, se comporta como hoy (`exento: false`).
-- [ ] `exento` con un valor que no es booleano devuelve `400 VALIDACION`.
-- [ ] Una factura con todas las líneas exentas tiene `impuesto: "0.00"`.
-- [ ] `GET /facturas/:id` devuelve `exento` en cada línea.
-- [ ] La suite existente sigue en verde sin modificar sus asserts.
+- [ ] An invoice with one exempt line of `100.00` and one taxable line of `100.00`
+      returns `subtotal: "200.00"`, `taxableBase: "100.00"`, `exemptBase: "100.00"`,
+      `tax: "18.00"`, `total: "218.00"`.
+- [ ] Without `taxExempt` on the line, it behaves as today (`taxExempt: false`).
+- [ ] A `taxExempt` value that is not a boolean returns `400 VALIDATION`.
+- [ ] An invoice where every line is exempt has `tax: "0.00"`.
+- [ ] `GET /invoices/:id` returns `taxExempt` on each line.
+- [ ] The existing suite stays green without modifying its assertions.
 
-## Alcance sugerido
+## Suggested scope
 
-- `prisma/schema.prisma` y una migración: columna `exento` en `LineaFactura`
-  con valor por defecto `false`. **Límite de AGENTS.md: lo autoriza quien firma la spec.**
+- `prisma/schema.prisma` and a migration: column `taxExempt` on `InvoiceLine`
+  defaulting to `false`. **AGENTS.md boundary: whoever signs the spec authorizes it.**
 - `src/services/invoices.ts`
 - `src/routes/invoices.ts`
-- Sus tests
+- Their tests

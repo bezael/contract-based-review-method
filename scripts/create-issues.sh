@@ -1,29 +1,29 @@
 #!/usr/bin/env bash
-# Publica docs/issues/NN-*.md como Issues de GitHub en el repo actual.
+# Publishes docs/issues/NN-*.md as GitHub Issues in the current repo.
 #
-#   bash scripts/create-issues.sh            crea los issues
-#   bash scripts/create-issues.sh --dry-run  solo muestra qué haría
+#   bash scripts/create-issues.sh            creates the issues
+#   bash scripts/create-issues.sh --dry-run  only shows what it would do
 #
-# Cada fichero: primera línea "# Título", una línea "Labels: a, b" y el resto
-# es el cuerpo. Requiere `gh` autenticado y el remoto apuntando a tu fork.
+# Each file: a first line "# Title", one line "Labels: a, b", and the rest is
+# the body. Requires `gh` authenticated and the remote pointing at your fork.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 DRY_RUN="${1:-}"
 
-for fichero in docs/issues/[0-9][0-9]-*.md; do
-  titulo="$(sed -n '1s/^# //p' "$fichero")"
-  etiquetas="$(sed -n 's/^Labels:[[:space:]]*//p' "$fichero" | tr -d ' ')"
-  cuerpo="$(sed '1d; /^Labels:/d' "$fichero")"
+for file in docs/issues/[0-9][0-9]-*.md; do
+  title="$(sed -n '1s/^# //p' "$file")"
+  labels="$(sed -n 's/^Labels:[[:space:]]*//p' "$file" | tr -d ' ')"
+  body="$(sed '1d; /^Labels:/d' "$file")"
 
-  args=(--title "$titulo" --body "$cuerpo")
-  [ -n "$etiquetas" ] && args+=(--label "$etiquetas")
+  args=(--title "$title" --body "$body")
+  [ -n "$labels" ] && args+=(--label "$labels")
 
   if [ "$DRY_RUN" = "--dry-run" ]; then
-    echo "gh issue create --title \"$titulo\" --label \"$etiquetas\"   # $fichero"
+    echo "gh issue create --title \"$title\" --label \"$labels\"   # $file"
   else
-    for etiqueta in ${etiquetas//,/ }; do
-      gh label create "$etiqueta" --force >/dev/null 2>&1 || true
+    for label in ${labels//,/ }; do
+      gh label create "$label" --force >/dev/null 2>&1 || true
     done
     gh issue create "${args[@]}"
   fi

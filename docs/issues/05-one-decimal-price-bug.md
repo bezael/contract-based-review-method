@@ -1,37 +1,36 @@
-# [bug] Un precio con un solo decimal se registra mal
+# [bug] A price with a single decimal is stored wrong
 
 Labels: bug
 
-## Qué pasa
+## What happens
 
-Al crear una factura con `precioUnitario: "4.5"`, la línea se guarda con
-`precioUnitario: "4.05"` y el subtotal sale mal. Operaciones lo detectó en
-una factura de `12.5` que salió como `12.05`.
+When creating an invoice with `unitPrice: "4.5"`, the line is stored as
+`unitPrice: "4.05"` and the subtotal comes out wrong. Operations caught it on
+an invoice of `12.5` that came out as `12.05`.
 
-## Qué debería pasar
+## What should happen
 
-`"4.5"` son 450 céntimos, igual que `"4.50"`. El formato de la API admite uno
-o dos decimales, así que ambos tienen que dar el mismo resultado.
+`"4.5"` is 450 cents, the same as `"4.50"`. The API format accepts one or two
+decimals, so both have to give the same result.
 
-## Cómo reproducirlo
+## How to reproduce it
 
 ```bash
-curl -s -X POST localhost:3000/facturas -H 'content-type: application/json' \
-  -d '{"clienteId":"<id>","lineas":[{"descripcion":"X","cantidad":1,"precioUnitario":"4.5"}]}'
-# subtotal: "4.05"  (esperado: "4.50")
+curl -s -X POST localhost:3000/invoices -H 'content-type: application/json' -d '{"customerId":"<id>","lines":[{"description":"X","quantity":1,"unitPrice":"4.5"}]}'
+# subtotal: "4.05"  (expected: "4.50")
 ```
 
-## Criterios de aceptación (verificables)
+## Acceptance criteria (verifiable)
 
-- [ ] Existe un test de regresión en `src/lib/money.test.ts` que falla antes
-      del arreglo y pasa después: `aCentimos("4.5") === 450`, `aCentimos("0.5") === 50`.
-- [ ] `aCentimos("4.50")` y `aCentimos("4.5")` devuelven lo mismo.
-- [ ] Un test de ruta crea una factura con `precioUnitario: "12.5"` y obtiene `subtotal: "12.50"`.
-- [ ] La suite existente sigue en verde sin modificar sus asserts.
+- [ ] There is a regression test in `src/lib/money.test.ts` that fails before
+      the fix and passes after: `toCents("4.5") === 450`, `toCents("0.5") === 50`.
+- [ ] `toCents("4.50")` and `toCents("4.5")` return the same value.
+- [ ] A route test creates an invoice with `unitPrice: "12.5"` and gets `subtotal: "12.50"`.
+- [ ] The existing suite stays green without modifying its assertions.
 
-## Alcance sugerido
+## Suggested scope
 
-- `src/lib/money.ts`. **Está en los límites de AGENTS.md: la spec tiene que
-  autorizarlo explícitamente y decir por qué.**
+- `src/lib/money.ts`. **It is inside the AGENTS.md boundaries: the spec has to
+  authorize it explicitly and say why.**
 - `src/lib/money.test.ts`
 - `src/routes/invoices.test.ts`

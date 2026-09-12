@@ -1,103 +1,107 @@
-# La demo del veredicto
+# The verdict demo
 
-El vídeo suelto de la ruta crítica: el agente entrega, la verificación falla
-y en pantalla se ve qué línea del contrato se rompió. Sin cortes. Es el CTA
-de mitad del ebook (capítulo 5) y el material que se amplía en el webinar.
+The standalone video on the critical path: the agent delivers, verification
+fails, and the screen shows which clause of the contract broke. No cuts. It is
+the CTA in the middle of the ebook (chapter 5) and the material expanded in the
+webinar.
 
-## Qué tiene que verse
+## What has to be visible
 
-Tres cláusulas rotas, de tres tipos distintos, en una sola ejecución de
+Three broken clauses, of three different kinds, in a single run of
 `pnpm verdict`:
 
-| Cláusula | Cómo se rompe | Cómo lo enseña el veredicto |
+| Clause | How it breaks | How the verdict shows it |
 |---|---|---|
-| Criterio de aceptación (redondeo half-up) | La implementación usa `Math.floor` en el descuento | `4  NO PASA` con la salida de vitest (`- 1 / + 0`). Arrastra al criterio 6, porque la suite completa incluye ese test |
-| Alcance de modificación | Se añade `descuento()` en `src/lib/money.ts`, que está en los límites | `FUERA  src/lib/money.ts ← no está en el alcance de la spec` |
-| Asserts existentes | Se quita `minItems: 1` del esquema de la ruta, el test existente se pone en rojo y se cambian sus dos `expect` para que pase | `MODIFICADO  src/routes/invoices.test.ts: expect(respuesta.statusCode).toBe(400)` (y el del error) |
+| Acceptance criterion (half-up rounding) | The implementation uses `Math.floor` for the discount | `4  FAIL` with the vitest output (`- 1 / + 0`). It drags criterion 6 down with it, because the full suite includes that test |
+| Modification scope | `discount()` is added to `src/lib/money.ts`, which is inside the boundaries | `OUT_OF_SCOPE  src/lib/money.ts ← not included in the spec scope` |
+| Existing assertions | `minItems: 1` is removed from the route schema, the existing test goes red, and its two `expect`s are changed so it passes | `MODIFIED  src/routes/invoices.test.ts: expect(response.statusCode).toBe(400)` (and the error one) |
 
-La salida completa, tal cual sale en pantalla, está en `verdict-output.txt`:
+The full output, exactly as it appears on screen, is in `verdict-output.txt`:
 
 ```
-Resultado: NO PASA · 2 criterios incumplidos · 1 fichero fuera de alcance · 2 asserts existentes modificados
+Result: FAIL · 2 failed criteria · 1 file out of scope · 2 existing assertions modified
 ```
 
-Y después, el arreglo: se revierte `money.ts`, se restaura `minItems` y los
-asserts, se usa `porcentaje()` con half-up, y `pnpm verdict` pasa a PASA. Lo
-que se lee es la tabla, no el diff.
+And then the fix: `money.ts` is reverted, `minItems` and the assertions are
+restored, `percentage()` is used with half-up rounding, and `pnpm verdict` turns
+to PASS. What you read is the table, not the diff.
 
-## Ficheros
+## Files
 
-| Fichero | Qué es |
+| File | What it is |
 |---|---|
-| `invoice-discount-spec.md` | El contrato firmado de referencia (el que se escribe en directo en el Módulo 2) |
-| `solution.patch` | La implementación correcta contra `main`: esquema, migración, servicio, ruta y tests. Es lo mismo que la rama `feat/descuento-factura` |
-| `verdict.patch` | La entrega con las tres cláusulas rotas, contra `main` |
-| `verdict-output.txt` | Lo que imprime `pnpm verdict` con el parche roto aplicado |
+| `invoice-discount-spec.md` | The signed reference contract (the one written live in Module 2) |
+| `solution.patch` | The correct implementation against `main`: schema, migration, service, route and tests. Same content as the `feat/invoice-discount` branch |
+| `verdict.patch` | The delivery with the three broken clauses, against `main` |
+| `verdict-output.txt` | What `pnpm verdict` prints with the broken patch applied |
 
-Los parches no incluyen `specs/`: la spec se copia aparte, porque en la
-grabación ya existe cuando se llega a este punto.
+The patches do not include `specs/`: the spec is copied separately, because by
+the time the recording reaches this point it already exists.
 
-## Preparación
+## Preparation
 
-1. Rama de partida con la spec firmada:
-   `git checkout -b feat/descuento-factura main`, copiar
-   `docs/demo/invoice-discount-spec.md` a `specs/descuento-factura/spec.md`
-   y hacer commit. (O directamente `git checkout grabacion/m2-fin`.)
-2. Aplicar la implementación "del agente" con las tres cláusulas rotas:
+1. Starting branch with the signed spec:
+   `git checkout -b feat/invoice-discount main`, copy
+   `docs/demo/invoice-discount-spec.md` to `specs/invoice-discount/spec.md`
+   and commit. (Or just `git checkout grabacion/m2-fin`.)
+2. Apply the "agent's" implementation with the three broken clauses:
    ```bash
-   git apply --check docs/demo/verdict.patch   # tiene que salir en silencio
+   git apply --check docs/demo/verdict.patch   # has to print nothing
    git apply docs/demo/verdict.patch
-   pnpm db:generate                              # el parche cambia el esquema de Prisma
+   pnpm db:generate                              # the patch changes the Prisma schema
    ```
-3. Comprobar en frío que `pnpm verdict` muestra lo mismo que
-   `verdict-output.txt`. Si `main` cambió y el parche no aplica,
-   regenerarlo (ver abajo).
+3. Check cold that `pnpm verdict` shows the same thing as `verdict-output.txt`.
+   If `main` moved and the patch no longer applies, regenerate it (see below).
 
-Para grabar en directo con el agente real: lanzarlo con la spec y
-`prompts/scoped-implementation.md`. Si se porta bien a la primera (pasa a
-menudo), se enseña el PASA y después se aplica el parche como "lo que hizo
-en otra ejecución". Lo honesto es decirlo: *"esto es lo que me entregó ayer"*.
+To record live with the real agent: launch it with the spec and
+`prompts/scoped-implementation.md`. If it behaves on the first try (it often
+does), show the PASS and then apply the patch as "what it gave me on another
+run". The honest thing is to say so out loud: *"this is what it handed me
+yesterday"*.
 
-## Guion (5–7 minutos)
+## Script (5-7 minutes)
 
-1. **Contrato en pantalla** (30 s). La tabla de criterios de la spec. Leer
-   el criterio 4 y el alcance. "Esto es lo que firmé antes de que escribiera
-   una línea."
-2. **El diff, sin leerlo** (20 s). `git diff --stat`. "Cuatro ficheros, 90
-   líneas. Antes aquí empezaban mis dos horas."
-3. **El veredicto** (60 s). `pnpm verdict specs/descuento-factura/spec.md`.
-   Esperar a que termine. Leer en voz alta las tres líneas rojas.
-4. **Qué significa cada una** (2 min). El criterio: el agente redondeó hacia
-   abajo, el contrato decía half-up. El alcance: tocó `money.ts`, que está
-   en los límites, y el hook no lo paró porque el agente lo escribió con un
-   comando de shell, y por eso existe la capa "detectado". El assert: cambió
-   el examen para aprobar. "Ninguna de las tres la habría visto en la línea
-   230 a las once de la noche."
-5. **El arreglo** (2 min). Revertir `money.ts`, restaurar el assert, usar
-   `porcentaje()`. `pnpm verdict` otra vez: PASA. `--write` y enseñar la
-   tabla en la spec. "Esto es lo que va en la PR. Esto es lo que leo."
-6. **Cierre** (20 s). "Veinte minutos. Y sé qué cláusula se rompió antes de
-   abrir el diff."
+1. **Contract on screen** (30 s). The criteria table of the spec. Read criterion
+   4 and the scope out loud. "This is what I signed before it wrote a line."
+2. **The diff, without reading it** (20 s). `git diff --stat`. "Seven files, 100
+   lines. This is where my two hours used to start."
+3. **The verdict** (60 s). `pnpm verdict specs/invoice-discount/spec.md`. Wait
+   for it to finish. Read the three red lines out loud.
+4. **What each one means** (2 min). The criterion: the agent rounded down, the
+   contract said half-up. The scope: it touched `money.ts`, which is inside the
+   boundaries, and the hook did not stop it because the agent wrote it with a
+   shell command, which is why the "detected" layer exists. The assertion: it
+   changed the exam to pass it. "I would not have caught any of the three on
+   line 230 at eleven at night."
+5. **The fix** (2 min). Revert `money.ts`, restore the assertion, use
+   `percentage()`. `pnpm verdict` again: PASS. `--write` and show the table in
+   the spec. "This is what goes in the PR. This is what I read."
+6. **Closing** (20 s). "Twenty minutes. And I know which clause broke before I
+   open the diff."
 
-## Regenerar los parches
+## Regenerating the patches
 
-Desde la rama con la solución correcta (`feat/descuento-factura`, tag
+From the branch with the correct solution (`feat/invoice-discount`, tag
 `grabacion/m4-fin`):
 
 ```bash
-git checkout feat/descuento-factura
+git checkout feat/invoice-discount
 git diff main -- . ':!specs' > docs/demo/solution.patch
 
-# introducir las tres roturas a mano:
-#   1. añadir en src/lib/money.ts:  export function descuento(c, pct) { return Math.floor((c * pct) / 100) }
-#      y usarla en src/services/invoices.ts en vez de porcentaje()
-#   2. quitar `minItems: 1` del esquema en src/routes/invoices.ts
-#   3. en src/routes/invoices.test.ts, renombrar "rechaza una factura sin líneas con 400"
-#      a "acepta una factura sin líneas" y cambiar sus dos expect (201 y lineas vacías)
+# introduce the three breakages by hand:
+#   1. add to src/lib/money.ts:  export function discount(c, pct) { return Math.floor((c * pct) / 100) }
+#      and use it in src/services/invoices.ts instead of percentage()
+#   2. remove `minItems: 1` from the schema in src/routes/invoices.ts
+#   3. in src/routes/invoices.test.ts, rename "rejects an invoice with no lines with 400"
+#      to "accepts an invoice with no lines" and change its two expects (201 and empty lines)
 git diff main -- . ':!specs' > docs/demo/verdict.patch
-pnpm verdict > docs/demo/verdict-output.txt 2>&1
+node scripts/verdict.mjs > docs/demo/verdict-output.txt 2>&1
 git checkout -- .
 ```
 
-Los parches son contra `main`. Si `main` avanza, se regeneran y se vuelve a
-probar `git apply --check`.
+Write both patches to a file outside the repo first and move them in
+afterwards: writing them straight into `docs/demo/` makes the second diff
+include the first patch.
+
+The patches are against `main`. If `main` moves forward, regenerate them and
+run `git apply --check` again.

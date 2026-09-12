@@ -1,39 +1,39 @@
-# Issues para practicar
+# Issues to practise on
 
-Diez tareas reales sobre esta API, en tres niveles. Ninguna trae la spec
-hecha: escribirla es la mitad del ejercicio (Módulo 2). Elige una, abre la
-rama con su slug y reproduce el ciclo entero sin seguir al instructor:
-contrato → carril → implementación → veredicto → revisión → PR.
+Ten real tasks on this API, in three levels. None of them comes with the spec
+written: writing it is half the exercise (Module 2). Pick one, open the branch
+with its slug and reproduce the whole cycle without following the instructor:
+contract → lane → implementation → verdict → review → PR.
 
-| # | Tipo | Tarea | Nivel | Toca límites |
+| # | Type | Task | Level | Touches boundaries |
 |---|---|---|---|---|
-| 01 | feature | Anular una factura emitida | ★☆☆ | no |
-| 02 | feature | Registrar pagos y pasar a PAID | ★★☆ | migración |
-| 03 | feature | Listar facturas con filtros y paginación | ★★☆ | no |
-| 04 | feature | Líneas exentas de ITBIS | ★★☆ | migración |
-| 05 | bug | Un precio con un solo decimal se registra mal | ★☆☆ | `money.ts` |
-| 06 | bug | Emitir dos veces cambia el número de la factura | ★☆☆ | no |
-| 07 | refactor | Extraer la numeración a un servicio propio | ★★☆ | no |
-| 08 | arquitectura | Historial de cambios de estado | ★★★ | migración |
-| 09 | feature | Notas de crédito | ★★★ | migración (y hay que dividirla) |
-| 10 | transversal | Identificador de petición en respuestas y logs | ★★☆ | no |
+| 01 | feature | Void an issued invoice | ★☆☆ | no |
+| 02 | feature | Record payments and move to PAID | ★★☆ | migration |
+| 03 | feature | List invoices with filters and pagination | ★★☆ | no |
+| 04 | feature | Tax-exempt lines | ★★☆ | migration |
+| 05 | bug | A price with a single decimal is stored wrong | ★☆☆ | `money.ts` |
+| 06 | bug | Issuing twice changes the invoice number | ★☆☆ | no |
+| 07 | refactor | Extract numbering into its own service | ★★☆ | no |
+| 08 | architecture | Status change history | ★★★ | migration |
+| 09 | feature | Credit notes | ★★★ | migration (and it has to be split) |
+| 10 | cross-cutting | Request id in responses and logs | ★★☆ | no |
 
-`00-invoice-discount-demo.md` es la feature que se construye en el workshop
-delante de ti. Está aquí para que puedas repetirla por tu cuenta.
+`00-invoice-discount-demo.md` is the feature built in front of you during the
+workshop. It is here so you can repeat it on your own.
 
-## Publicarlos en tu fork
+## Publishing them in your fork
 
-Con `gh` autenticado y el repo apuntando a tu fork:
+With `gh` authenticated and the repo pointing at your fork:
 
 ```bash
 bash scripts/create-issues.sh
 ```
 
-Crea un Issue por fichero, con su etiqueta. `scripts/create-issues.sh --dry-run`
-solo muestra lo que haría.
+It creates one Issue per file, with its label. `scripts/create-issues.sh --dry-run`
+only shows what it would do.
 
-## Orden recomendado
+## Recommended order
 
-Empieza por 06 (bug pequeño, sin límites), sigue con 01 (feature sin
-migración) y después 05 (te obliga a autorizar un límite en la spec). A
-partir de ahí, el que más se parezca a tu trabajo.
+Start with 06 (small bug, no boundaries), continue with 01 (feature with no
+migration) and then 05 (it forces you to authorize a boundary in the spec).
+From there, whichever one looks most like your own work.

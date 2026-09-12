@@ -1,32 +1,33 @@
-# [refactor] Extraer la numeración de facturas a un servicio propio
+# [refactor] Extract invoice numbering into its own service
 
 Labels: refactor
 
-## Qué se quiere cambiar y por qué
+## What changes and why
 
-La numeración correlativa vive como función privada dentro de
-`src/services/invoices.ts`. Va a crecer (series por sucursal, notas de
-crédito con prefijo propio) y ahora mismo no se puede probar sola. Se extrae
-a `src/services/numerador.ts` con una función `siguienteNumero(db, prefijo, fecha)`
-y sus propios tests.
+Sequential numbering lives as a private function inside
+`src/services/invoices.ts`. It is going to grow (series per branch office,
+credit notes with their own prefix) and right now it cannot be tested on its
+own. It moves to `src/services/numbering.ts` with a function
+`nextNumber(db, prefix, date)` and its own tests.
 
-## Comportamiento que se conserva
+## Behaviour that is preserved
 
-- Formato `F-AAAA-NNNN`, cuatro dígitos con ceros a la izquierda.
-- Reinicio de la numeración cada año, en UTC.
-- La emisión sigue asignando el número exactamente igual: ningún test de
-  `facturas.test.ts` cambia.
+- Format `F-YYYY-NNNN`, four digits with leading zeros.
+- Numbering resets every year, in UTC.
+- Issuing still assigns the number exactly the same way: no test in
+  `invoices.test.ts` changes.
 
-## Criterios de aceptación (verificables)
+## Acceptance criteria (verifiable)
 
-- [ ] La suite existente pasa sin modificar ni un assert.
-- [ ] `src/services/numerador.test.ts` prueba el formato, el reinicio anual y
-      el caso de la primera factura del año.
-- [ ] `src/services/invoices.ts` ya no contiene lógica de numeración: solo importa `siguienteNumero`.
-- [ ] `pnpm typecheck && pnpm lint` en verde, sin excepciones nuevas.
+- [ ] The existing suite passes without modifying a single assertion.
+- [ ] `src/services/numbering.test.ts` covers the format, the yearly reset and
+      the case of the first invoice of the year.
+- [ ] `src/services/invoices.ts` no longer contains numbering logic: it only
+      imports `nextNumber`.
+- [ ] `pnpm typecheck && pnpm lint` green, with no new exceptions.
 
-## Alcance sugerido
+## Suggested scope
 
-- `src/services/numerador.ts` (nuevo)
-- `src/services/numerador.test.ts` (nuevo)
+- `src/services/numbering.ts` (new)
+- `src/services/numbering.test.ts` (new)
 - `src/services/invoices.ts`

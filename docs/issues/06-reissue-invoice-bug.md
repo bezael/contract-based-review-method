@@ -1,34 +1,34 @@
-# [bug] Emitir dos veces una factura le cambia el número
+# [bug] Issuing an invoice twice changes its number
 
 Labels: bug
 
-## Qué pasa
+## What happens
 
-Si se llama a `POST /facturas/:id/emitir` sobre una factura que ya está
-`ISSUED`, la factura recibe un número nuevo y una fecha de emisión nueva. El
-número anterior queda huérfano y la numeración correlativa tiene un hueco.
-Un reintento de red del cliente basta para provocarlo.
+If `POST /invoices/:id/issue` is called on an invoice that is already `ISSUED`,
+the invoice gets a new number and a new issue date. The previous number is left
+orphaned and the sequential numbering has a gap. A network retry from the client
+is enough to trigger it.
 
-## Qué debería pasar
+## What should happen
 
-Solo un `DRAFT` se puede emitir. Cualquier otro estado devuelve
-`409 ESTADO_INVALIDO` y no modifica nada.
+Only a `DRAFT` can be issued. Any other status returns `409 INVALID_STATUS` and
+changes nothing.
 
-## Cómo reproducirlo
+## How to reproduce it
 
 ```bash
-curl -s -X POST localhost:3000/facturas/<id>/emitir   # numero: F-2026-0001
-curl -s -X POST localhost:3000/facturas/<id>/emitir   # numero: F-2026-0002 (esperado: 409)
+curl -s -X POST localhost:3000/invoices/<id>/issue   # number: F-2026-0001
+curl -s -X POST localhost:3000/invoices/<id>/issue   # number: F-2026-0002 (expected: 409)
 ```
 
-## Criterios de aceptación (verificables)
+## Acceptance criteria (verifiable)
 
-- [ ] Existe un test de regresión que emite dos veces y comprueba que la
-      segunda devuelve `409 ESTADO_INVALIDO` y que `numero` y `emitidaEn` no cambian.
-- [ ] Emitir un `DRAFT` sigue funcionando exactamente igual.
-- [ ] La suite existente sigue en verde sin modificar sus asserts.
+- [ ] There is a regression test that issues twice and checks that the second
+      call returns `409 INVALID_STATUS` and that `number` and `issuedAt` do not change.
+- [ ] Issuing a `DRAFT` keeps working exactly as before.
+- [ ] The existing suite stays green without modifying its assertions.
 
-## Alcance sugerido
+## Suggested scope
 
 - `src/services/invoices.ts`
 - `src/services/invoices.test.ts`

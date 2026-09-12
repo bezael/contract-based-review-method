@@ -1,44 +1,45 @@
-# [feat] Notas de crédito
+# [feat] Credit notes
 
 Labels: feature
 
-## Qué se quiere
+## What we want
 
-Cuando una factura emitida tiene un error o una devolución parcial, se emite
-una nota de crédito contra ella. La nota tiene su propia numeración
-(`NC-AAAA-NNNN`), referencia a la factura original, líneas propias con sus
-importes y el mismo cálculo de ITBIS. Una factura puede tener varias notas,
-pero la suma no puede superar el total de la factura. Una nota de crédito
-por el total completo deja la factura en `VOIDED`. Las notas se listan
-junto a la factura en `GET /facturas/:id`.
+When an issued invoice has an error or a partial return, a credit note is issued
+against it. The note has its own numbering (`NC-YYYY-NNNN`), a reference to the
+original invoice, its own lines with their amounts and the same tax calculation.
+An invoice can have several notes, but their sum cannot exceed the invoice
+total. A credit note for the full total leaves the invoice at `VOIDED`. Notes
+are listed alongside the invoice in `GET /invoices/:id`.
 
-## Qué queda fuera
+## What is out of scope
 
-- Notas de débito.
-- Aplicar la nota a otra factura del mismo cliente.
-- Anular una nota de crédito.
+- Debit notes.
+- Applying the note to another invoice of the same customer.
+- Voiding a credit note.
 
-## Criterios de aceptación (verificables)
+## Acceptance criteria (verifiable)
 
-- [ ] `POST /facturas/:id/notas-credito` sobre una `ISSUED` crea la nota con número `NC-AAAA-0001`.
-- [ ] La nota calcula subtotal, ITBIS y total con las mismas reglas que la factura.
-- [ ] Una nota cuyo total supera el pendiente de la factura devuelve `400 VALIDACION`.
-- [ ] Una nota por el total completo deja la factura en `VOIDED`.
-- [ ] Sobre `DRAFT` o `VOIDED` devuelve `409 ESTADO_INVALIDO`.
-- [ ] `GET /facturas/:id` incluye `notasCredito: [...]`.
-- [ ] La numeración de notas es independiente de la de facturas y se reinicia cada año.
-- [ ] La suite existente sigue en verde sin modificar sus asserts.
+- [ ] `POST /invoices/:id/credit-notes` on an `ISSUED` invoice creates the note
+      with number `NC-YYYY-0001`.
+- [ ] The note calculates subtotal, tax and total with the same rules as the invoice.
+- [ ] A note whose total exceeds the invoice's outstanding amount returns `400 VALIDATION`.
+- [ ] A note for the full total leaves the invoice at `VOIDED`.
+- [ ] On `DRAFT` or `VOIDED` it returns `409 INVALID_STATUS`.
+- [ ] `GET /invoices/:id` includes `creditNotes: [...]`.
+- [ ] Note numbering is independent from invoice numbering and resets every year.
+- [ ] The existing suite stays green without modifying its assertions.
 
-## Alcance sugerido
+## Suggested scope
 
-- `prisma/schema.prisma` y migraciones. **Límite de AGENTS.md.**
-- `src/services/notas-credito.ts` (nuevo), `src/services/invoices.ts`, `src/services/numerador.ts` si existe
-- `src/routes/notas-credito.ts` (nuevo), `src/app.ts`
-- Sus tests
+- `prisma/schema.prisma` and migrations. **AGENTS.md boundary.**
+- `src/services/credit-notes.ts` (new), `src/services/invoices.ts`,
+  `src/services/numbering.ts` if it exists
+- `src/routes/credit-notes.ts` (new), `src/app.ts`
+- Their tests
 
-## Contexto
+## Context
 
-Este issue **no cabe en una spec de dos páginas**. Parte del ejercicio es
-dividirlo: por ejemplo, (1) modelo y creación de la nota con numeración
-propia, (2) reglas de importe máximo y anulación automática, (3) exposición
-en `GET /facturas/:id`. Cada parte con su contrato, su rama y su PR.
+This issue **does not fit in a two-page spec**. Part of the exercise is
+splitting it: for example, (1) the model and creating the note with its own
+numbering, (2) the maximum-amount rules and the automatic voiding, (3) exposing
+it in `GET /invoices/:id`. Each part with its own contract, branch and PR.
