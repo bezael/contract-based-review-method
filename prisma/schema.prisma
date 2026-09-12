@@ -30,6 +30,8 @@ model Invoice {
   customerId   String
   customer     Customer      @relation(fields: [customerId], references: [id])
   subtotalCents Int
+  discountBps  Int           @default(0)
+  discountCents Int          @default(0)
   taxCents     Int
   totalCents   Int
   issuedAt     DateTime?

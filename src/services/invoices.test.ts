@@ -31,6 +31,20 @@ describe('createInvoice', () => {
     expect(invoice.lines[0]?.totalCents).toBe(2500)
   })
 
+  it('rounds the discount half up', async () => {
+    const invoice = await createInvoice(db, {
+      customerId,
+      discountPct: 10,
+      lines: [{ description: 'Centavo', quantity: 1, unitPrice: '0.05' }],
+    })
+
+    expect(invoice.subtotalCents).toBe(5)
+    expect(invoice.discountBps).toBe(1000)
+    expect(invoice.discountCents).toBe(1)
+    expect(invoice.taxCents).toBe(1)
+    expect(invoice.totalCents).toBe(5)
+  })
+
   it('fails when the customer does not exist', async () => {
     await expect(
       createInvoice(db, {

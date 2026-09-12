@@ -9,6 +9,7 @@ import {
 
 type CreateInvoiceRequest = {
   customerId: string
+  discountPct?: number
   lines: Array<{
     description: string
     quantity: number
@@ -22,6 +23,7 @@ const newInvoiceSchema = {
   additionalProperties: false,
   properties: {
     customerId: { type: 'string', minLength: 1 },
+    discountPct: { type: 'integer', minimum: 0, maximum: 100 },
     lines: {
       type: 'array',
       minItems: 1,
@@ -48,6 +50,8 @@ export const invoiceRoutes: FastifyPluginAsync<{ db: Db }> = async (app, { db })
       const invoice = await createInvoice(db, {
         customerId: request.body.customerId,
         lines: request.body.lines,
+        // exactOptionalPropertyTypes: an absent discount is not the same as `undefined`.
+        ...(request.body.discountPct === undefined ? {} : { discountPct: request.body.discountPct }),
       })
       return reply.status(201).send(toDto(invoice))
     },

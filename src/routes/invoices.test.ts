@@ -40,6 +40,57 @@ describe('POST /invoices', () => {
     expect(response.json().lines[0]).toMatchObject({ unitPrice: '12.50', total: '25.00' })
   })
 
+  it('applies a 10 percent discount before tax', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/invoices',
+      payload: {
+        customerId,
+        discountPct: 10,
+        lines: [{ description: 'Licencia', quantity: 1, unitPrice: '100.00' }],
+      },
+    })
+
+    expect(response.statusCode).toBe(201)
+    expect(response.json()).toMatchObject({
+      subtotal: '100.00',
+      discountPct: 10,
+      discount: '10.00',
+      tax: '16.20',
+      total: '106.20',
+    })
+  })
+
+  it('returns a zero discount when discountPct is absent', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/invoices',
+      payload: { customerId, lines },
+    })
+
+    expect(response.statusCode).toBe(201)
+    expect(response.json()).toMatchObject({
+      discountPct: 0,
+      discount: '0.00',
+      subtotal: '125.00',
+      tax: '22.50',
+      total: '147.50',
+    })
+  })
+
+  it('rejects an invalid discountPct with 400', async () => {
+    for (const discountPct of [101, -1, 12.5]) {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/invoices',
+        payload: { customerId, discountPct, lines },
+      })
+
+      expect(response.statusCode).toBe(400)
+      expect(response.json().error).toBe('VALIDATION')
+    }
+  })
+
   it('rejects an invoice with no lines with 400', async () => {
     const response = await app.inject({
       method: 'POST',
@@ -70,6 +121,22 @@ describe('GET /invoices/:id', () => {
 
     expect(response.statusCode).toBe(200)
     expect(response.json().lines).toHaveLength(2)
+  })
+
+  it('returns the discount fields', async () => {
+    const created = await app.inject({
+      method: 'POST',
+      url: '/invoices',
+      payload: {
+        customerId,
+        discountPct: 10,
+        lines: [{ description: 'Licencia', quantity: 1, unitPrice: '100.00' }],
+      },
+    })
+    const response = await app.inject({ method: 'GET', url: `/invoices/${created.json().id}` })
+
+    expect(response.statusCode).toBe(200)
+    expect(response.json()).toMatchObject({ discountPct: 10, discount: '10.00', total: '106.20' })
   })
 
   it('returns 404 when it does not exist', async () => {
