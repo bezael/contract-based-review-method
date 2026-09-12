@@ -1,55 +1,55 @@
-# Spec: Descuento por factura
+# Spec: Invoice discount
 
-> Contrato de referencia de la feature que se construye en el workshop
-> (Módulos 2 a 7). En la grabación se escribe en directo desde el Issue 00;
-> esta es la versión firmada, para comparar.
+> Reference contract for the feature built during the workshop (Modules 2 to 7).
+> In the recording it is written live from Issue 00; this is the signed
+> version, kept for comparison.
 
 **Issue:** #0 · docs/issues/00-invoice-discount-demo.md
-**Fecha:** 2026-09-20
-**Estado:** firmada
+**Date:** 2026-09-20
+**Status:** signed
 
-## Qué se quiere
+## What we want
 
-Al crear una factura se puede indicar `descuentoPct`, un entero de 0 a 100.
-El descuento se aplica sobre el subtotal antes del ITBIS. La respuesta
-incluye `descuentoPct`, el importe `descuento` y los totales ya descontados,
-tanto al crear como al consultar.
+When creating an invoice you can pass `discountPct`, an integer from 0 to 100.
+The discount applies to the subtotal before tax. The response includes
+`discountPct`, the `discount` amount and the discounted totals, both when
+creating and when reading the invoice.
 
-## Qué queda fuera
+## What is out of scope
 
-- Descuentos por línea, cupones o descuentos por cliente.
-- Modificar el descuento después de crear la factura.
-- Descuentos sobre facturas ya emitidas.
-- Cualquier cambio en `src/lib/money.ts`: `porcentaje()` ya hace el redondeo que se necesita.
+- Per-line discounts, coupons or customer-level discounts.
+- Changing the discount after the invoice has been created.
+- Discounts on invoices that have already been issued.
+- Any change to `src/lib/money.ts`: `percentage()` already does the rounding we need.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-| # | Criterio | Cómo se verifica |
+| # | Criterion | How it is verified |
 |---|---|---|
-| 1 | `POST /facturas` con `descuentoPct: 10` y subtotal 100.00 devuelve `descuento: "10.00"`, `impuesto: "16.20"`, `total: "106.20"` | `pnpm vitest run src/routes/invoices.test.ts -t "descuento del 10"` |
-| 2 | Sin `descuentoPct`, devuelve `descuentoPct: 0`, `descuento: "0.00"` y los totales de siempre | `pnpm vitest run src/routes/invoices.test.ts -t "sin descuento"` |
-| 3 | `descuentoPct` 101, -1 o 12.5 devuelve 400 VALIDACION | `pnpm vitest run src/routes/invoices.test.ts -t "descuento inválido"` |
-| 4 | El importe del descuento se redondea a mitad hacia arriba: 0.05 al 10 % descuenta 0.01 | `pnpm vitest run src/services/invoices.test.ts -t "redondea el descuento"` |
-| 5 | `GET /facturas/:id` devuelve los mismos campos de descuento | `pnpm vitest run src/routes/invoices.test.ts -t "devuelve el descuento"` |
-| 6 | La suite existente sigue en verde sin tocar sus asserts | `pnpm test` |
-| 7 | Tipos y lint sin excepciones nuevas | `pnpm typecheck && pnpm lint` |
+| 1 | `POST /invoices` with `discountPct: 10` and subtotal 100.00 returns `discount: "10.00"`, `tax: "16.20"`, `total: "106.20"` | `pnpm vitest run src/routes/invoices.test.ts -t "10 percent discount"` |
+| 2 | Without `discountPct` it returns `discountPct: 0`, `discount: "0.00"` and the usual totals | `pnpm vitest run src/routes/invoices.test.ts -t "zero discount"` |
+| 3 | A `discountPct` of 101, -1 or 12.5 returns 400 VALIDATION | `pnpm vitest run src/routes/invoices.test.ts -t "invalid discountPct"` |
+| 4 | The discount amount rounds half up: 0.05 at 10 % discounts 0.01 | `pnpm vitest run src/services/invoices.test.ts -t "rounds the discount"` |
+| 5 | `GET /invoices/:id` returns the same discount fields | `pnpm vitest run src/routes/invoices.test.ts -t "discount fields"` |
+| 6 | The existing suite stays green without touching its assertions | `pnpm test` |
+| 7 | Types and lint with no new exceptions | `pnpm typecheck && pnpm lint` |
 
-## Alcance de modificación
+## Modification scope
 
-- `prisma/schema.prisma` — columnas `descuentoBps Int @default(0)` y `descuentoCent Int @default(0)` en `Factura`. **Límite de AGENTS.md, autorizado por Bezael el 2026-09-20: es una columna nueva con valor por defecto, no destruye datos.**
-- `prisma/migrations/**` — la migración generada con `pnpm db:migrate --name descuento-factura`. Misma autorización.
+- `prisma/schema.prisma` — columns `discountBps Int @default(0)` and `discountCents Int @default(0)` on `Invoice`. **AGENTS.md boundary, authorized by Bezael on 2026-09-20: a new column with a default value, it destroys no data.**
+- `prisma/migrations/**` — the migration generated with `pnpm db:migrate --name invoice-discount`. Same authorization.
 - `src/services/invoices.ts`
 - `src/routes/invoices.ts`
 - `src/services/invoices.test.ts`
 - `src/routes/invoices.test.ts`
 
-## Riesgos
+## Risks
 
-- Que el descuento se aplique después del ITBIS en lugar de antes. Lo detecta el criterio 1 (el impuesto sería 18.00, no 16.20).
-- Que se guarde el porcentaje como Float. Lo detecta `pnpm typecheck` si el tipo de Prisma es `Int`, y el criterio 3 si se admite 12.5.
-- Que la migración rompa las facturas existentes. Lo detecta `pnpm test`: los tests aplican todas las migraciones sobre datos creados sin descuento.
-- Que el redondeo se haga con `Math.round` o `Math.floor` en vez de `porcentaje()`. Lo detecta el criterio 4.
+- The discount being applied after tax instead of before. Criterion 1 catches it (tax would be 18.00, not 16.20).
+- The percentage being stored as a Float. `pnpm typecheck` catches it if the Prisma type is `Int`, and criterion 3 catches it if 12.5 is accepted.
+- The migration breaking existing invoices. `pnpm test` catches it: tests apply every migration over data created without a discount.
+- The rounding being done with `Math.round` or `Math.floor` instead of `percentage()`. Criterion 4 catches it.
 
-## Veredicto
+## Verdict
 
-> Lo rellena `pnpm verdict --write` al terminar.
+> Filled in by `pnpm verdict --write` when the task is finished.
