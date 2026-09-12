@@ -145,10 +145,10 @@ const manualCriteria = results.filter((result) => result.status === 'MANUAL').le
 const passed = failedCriteria === 0 && outOfScope.length === 0 && modifiedAssertions.length === 0
 
 const summary = []
-if (failedCriteria) summary.push(`${failedCriteria} failed criterion${failedCriteria > 1 ? 's' : ''}`)
+if (failedCriteria) summary.push(`${failedCriteria} failed ${failedCriteria > 1 ? 'criteria' : 'criterion'}`)
 if (outOfScope.length) summary.push(`${outOfScope.length} file${outOfScope.length > 1 ? 's' : ''} out of scope`)
 if (modifiedAssertions.length) summary.push(`${modifiedAssertions.length} existing assertion${modifiedAssertions.length > 1 ? 's' : ''} modified`)
-if (manualCriteria) summary.push(`${manualCriteria} manual criterion${manualCriteria > 1 ? 's' : ''}`)
+if (manualCriteria) summary.push(`${manualCriteria} manual ${manualCriteria > 1 ? 'criteria' : 'criterion'}`)
 
 console.log(`Result: ${passed ? 'PASS' : 'FAIL'}${summary.length ? ' · ' + summary.join(' · ') : ''}`)
 console.log('')
