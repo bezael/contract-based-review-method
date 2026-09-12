@@ -1,5 +1,5 @@
 ---
-name: revision-pr
+name: ak-pr-review
 description: "Cierra el ciclo: genera la Pull Request que conecta Issue, spec, diff, veredicto y revisión, usando .github/PULL_REQUEST_TEMPLATE.md y solo evidencia real (ejecuta pnpm verdict --write antes). Úsala cuando el usuario diga 'abre la PR', 'pull request', 'cierra el loop' o 'prepara el merge'. Es el Módulo 7 del workshop. No abre la PR sin confirmación."
 disable-model-invocation: true
 allowed-tools: Bash(git *) Bash(gh *) Bash(pnpm *) Read Glob Grep

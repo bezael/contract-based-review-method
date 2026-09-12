@@ -34,4 +34,4 @@
 
 ---
 
-*Maintained by the **dominicode-sdd-creator** skill (Bezael Pérez · Dominicode). Do not hand-edit during an active spec session — let the skill reconcile it at hand-off.*
+*Maintained by the **ak-sdd-creator** skill (Bezael Pérez · Dominicode). Do not hand-edit during an active spec session — let the skill reconcile it at hand-off.*

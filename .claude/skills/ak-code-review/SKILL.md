@@ -1,5 +1,5 @@
 ---
-name: revision-codigo
+name: ak-code-review
 description: "Code review con un segundo agente que no escribió el código: compara el diff real contra la spec firmada (specs/<slug>/spec.md) y AGENTS.md, primero cumplimiento del contrato, después corrección, seguridad, tests y mantenibilidad. Cierra con un veredicto de alineación (Exacto, Enredado, Incompleto, Incompleto y Enredado). Úsala cuando el usuario diga 'revisa', 'code review', 'audita el diff', 'segundo agente' o antes de abrir la PR. Es el Módulo 6 del workshop."
 context: fork
 agent: Explore

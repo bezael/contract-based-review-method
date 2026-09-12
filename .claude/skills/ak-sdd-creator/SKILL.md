@@ -1,5 +1,5 @@
 ---
-name: dominicode-sdd-creator
+name: ak-sdd-creator
 description: "Run the Dominicode Spec-Driven Development lifecycle for non-trivial features and products: understand the request or Issue, create spec.md + plan.md + evidence-based tasks.md before code, then guide implementation, verification/fix, code review, final verification and PR/handoff. Use when users ask to build, scaffold, plan, design or specify a feature, MVP, module or project. TDD remains the default; durable decisions stay in spec, plan and tasks."
 ---
 

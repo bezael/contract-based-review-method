@@ -1,5 +1,5 @@
 ---
-name: veredicto
+name: ak-verdict
 description: "Ejecuta pnpm verdict sobre la spec de la rama actual, interpreta el resultado (criterios, alcance, asserts) y dice qué cláusula del contrato se rompió y cuál es el siguiente paso. Úsala cuando el usuario diga 'veredicto', 'verifica', '¿pasa?', 'está terminado', o después de implementar. Es el Módulo 5 del workshop."
 allowed-tools: Bash(pnpm *) Bash(git *) Read
 ---

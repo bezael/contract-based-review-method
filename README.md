@@ -1,4 +1,4 @@
-# Revisión por Contrato · repositorio del workshop
+# Método Revisión por Contrato · repositorio del workshop
 
 **Contract-based review method** · SDD + Agentic Engineering · Bezael Pérez ·
 [Dominicode](https://dominicode.com)
@@ -45,11 +45,13 @@ leer el diff entero.
 
 ### Las tres piezas
 
-| Pieza | Qué responde | Dónde vive en este repo |
-|---|---|---|
-| **Contrato** | Qué hay que construir, en términos comprobables | [`AGENTS.md`](AGENTS.md) (permanente) · [`specs/`](specs/spec.template.md) (de esta tarea) |
-| **Carril** | Por dónde no puede salirse | [`.claude/hooks/guard-boundaries.mjs`](.claude/hooks/guard-boundaries.mjs) · los límites de `AGENTS.md` · CI |
-| **Veredicto** | Cómo sabemos que está bien | [`scripts/verdict.mjs`](scripts/verdict.mjs) → `pnpm verdict` |
+
+| Pieza         | Qué responde                                    | Dónde vive en este repo                                                                                      |
+| ------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Contrato**  | Qué hay que construir, en términos comprobables | `[AGENTS.md](AGENTS.md)` (permanente) · `[specs/](specs/spec.template.md)` (de esta tarea)                   |
+| **Carril**    | Por dónde no puede salirse                      | `[.claude/hooks/guard-boundaries.mjs](.claude/hooks/guard-boundaries.mjs)` · los límites de `AGENTS.md` · CI |
+| **Veredicto** | Cómo sabemos que está bien                      | `[scripts/verdict.mjs](scripts/verdict.mjs)` → `pnpm verdict`                                                |
+
 
 El carril vive en tres capas y conviene no confundirlas: **declarado** —lo que
 pone en `AGENTS.md`, la capa barata, y la que quita la mayoría de las
@@ -68,31 +70,37 @@ nombrado, temprano y barato, en vez de anónimo, tarde y a tu costa.
 
 ## El workshop
 
-| | |
-|---|---|
-| **Qué es** | Workshop bajo demanda, 9 módulos, unas 3 horas. El sistema montado delante de ti sobre este repo, de un Issue real a una PR con evidencia |
-| **Para quién** | Developers que ya usan agentes a diario y pierden más tiempo revisando código generado del que ahorraron generándolo |
-| **Web y acceso** | [workshop.dominicode.com](https://workshop.dominicode.com) |
-| **Ebook gratuito** | [Revisión por Contrato](https://workshop.dominicode.com/ebook): por qué falla auditar código generado y qué es un contrato. Cubre el Módulo 0 y el concepto de los Módulos 1 a 3 |
-| **Webinar gratuito** | [1 de octubre de 2026, 18:00 Santo Domingo](https://workshop.dominicode.com/webinar): una feature real entera, contrato, carril, veredicto y PR, en 55 minutos |
-| **Lista de espera** | [Aviso de apertura](https://workshop.dominicode.com/lista) |
-| **Q&A en vivo** | 22 de octubre de 2026, 60 minutos. Diez repos revisados en directo, por orden de compra. Trae el `AGENTS.md` que montaste |
-| **Para equipos** | [Workshop para empresas](https://workshop.dominicode.com/workshop-empresas) |
-| **Garantía** | Del carril, 14 días: monta el harness en un repo tuyo de verdad y, si revisar una PR te sigue costando lo mismo, enséñame el `AGENTS.md` y te devuelvo el dinero |
+
+|                      |                                                                                                                                                                                  |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Qué es**           | Workshop bajo demanda, 9 módulos, unas 3 horas. El sistema montado delante de ti sobre este repo, de un Issue real a una PR con evidencia                                        |
+| **Para quién**       | Developers que ya usan agentes a diario y pierden más tiempo revisando código generado del que ahorraron generándolo                                                             |
+| **Web y acceso**     | [workshop.dominicode.com](https://workshop.dominicode.com)                                                                                                                       |
+| **Ebook gratuito**   | [Revisión por Contrato](https://workshop.dominicode.com/ebook): por qué falla auditar código generado y qué es un contrato. Cubre el Módulo 0 y el concepto de los Módulos 1 a 3 |
+| **Webinar gratuito** | [1 de octubre de 2026, 18:00 Santo Domingo](https://workshop.dominicode.com/webinar): una feature real entera, contrato, carril, veredicto y PR, en 55 minutos                   |
+| **Lista de espera**  | [Aviso de apertura](https://workshop.dominicode.com/lista)                                                                                                                       |
+| **Q&A en vivo**      | 22 de octubre de 2026, 60 minutos. Diez repos revisados en directo, por orden de compra. Trae el `AGENTS.md` que montaste                                                        |
+| **Para equipos**     | [Workshop para empresas](https://workshop.dominicode.com/workshop-empresas)                                                                                                      |
+| **Garantía**         | Del carril, 14 días: monta el harness en un repo tuyo de verdad y, si revisar una PR te sigue costando lo mismo, enséñame el `AGENTS.md` y te devuelvo el dinero                 |
+
+
+
 
 ## Los 9 módulos y qué usas de este repo
 
-| Módulo | Qué se hace | Dónde está |
-|---|---|---|
-| 0 · Antes de escribir código | El nuevo cuello de botella: tú eres la única verificación del sistema | Capítulos 1 y 2 del ebook |
-| 1 · El sistema completo | El mapa del Issue a la PR verificada, y este repo corriendo en tu máquina | [`docs/architecture-diagram.md`](docs/architecture-diagram.md) · sección "Arrancar" de abajo |
-| 2 · Del Issue a la spec ejecutable | Criterios que un comando puede rechazar, alcance cerrado, firma | [`specs/spec.template.md`](specs/spec.template.md) · skill `contrato` · [`prompts/contract.md`](prompts/contract.md) |
-| 3 · Preparar el harness | `AGENTS.md` con comandos reales, límites en tres capas, CI. **Sobre tu repo** | [`AGENTS.md`](AGENTS.md) · skill `dominicode-harness-init` · [`prompts/harness-init.md`](prompts/harness-init.md) · [`docs/checklists/harness-engineering.md`](docs/checklists/harness-engineering.md) |
-| 4 · Implementación agentic | Plan con comandos, implementación acotada, bucle corto tras cada cambio, el hook parando al agente | [`prompts/planning.md`](prompts/planning.md) · [`prompts/scoped-implementation.md`](prompts/scoped-implementation.md) · [`.claude/hooks/guard-boundaries.mjs`](.claude/hooks/guard-boundaries.mjs) |
-| 5 · Verificación | Las capas del veredicto, dos velocidades, `pnpm verdict` nombrando la cláusula rota | [`scripts/verdict.mjs`](scripts/verdict.mjs) · skill `veredicto` · [`docs/checklists/verificacion.md`](docs/checklists/verificacion.md) · [`docs/demo/`](docs/demo/) |
-| 6 · Code review con agentes | Un segundo agente sin el contexto del primero, veredicto de alineación | skill `revision-codigo` · [`docs/workflows/code-review.md`](docs/workflows/code-review.md) · [`prompts/code-review.md`](prompts/code-review.md) |
-| 7 · Cerrar el loop | La PR con contrato, veredicto y evidencia; los 20 minutos de quien revisa | skill `revision-pr` · [`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md) · [`docs/workflows/pr-review.md`](docs/workflows/pr-review.md) |
-| 8 · Tu turno | Diez issues reales para reproducir el ciclo sin seguir al instructor | [`docs/issues/`](docs/issues/) |
+
+| Módulo                             | Qué se hace                                                                                        | Dónde está                                                                                                                                                                                         |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0 · Antes de escribir código       | El nuevo cuello de botella: tú eres la única verificación del sistema                              | Capítulos 1 y 2 del ebook                                                                                                                                                                          |
+| 1 · El sistema completo            | El mapa del Issue a la PR verificada, y este repo corriendo en tu máquina                          | `[docs/architecture-diagram.md](docs/architecture-diagram.md)` · sección "Arrancar" de abajo                                                                                                       |
+| 2 · Del Issue a la spec ejecutable | Criterios que un comando puede rechazar, alcance cerrado, firma                                    | `[specs/spec.template.md](specs/spec.template.md)` · skill `ak-contract` · `[prompts/contract.md](prompts/contract.md)`                                                                            |
+| 3 · Preparar el harness            | `AGENTS.md` con comandos reales, límites en tres capas, CI. **Sobre tu repo**                      | `[AGENTS.md](AGENTS.md)` · skill `ak-harness-init` · `[prompts/harness-init.md](prompts/harness-init.md)` · `[docs/checklists/harness-engineering.md](docs/checklists/harness-engineering.md)`     |
+| 4 · Implementación agentic         | Plan con comandos, implementación acotada, bucle corto tras cada cambio, el hook parando al agente | `[prompts/planning.md](prompts/planning.md)` · `[prompts/scoped-implementation.md](prompts/scoped-implementation.md)` · `[.claude/hooks/guard-boundaries.mjs](.claude/hooks/guard-boundaries.mjs)` |
+| 5 · Verificación                   | Las capas del veredicto, dos velocidades, `pnpm verdict` nombrando la cláusula rota                | `[scripts/verdict.mjs](scripts/verdict.mjs)` · skill `ak-verdict` · `[docs/checklists/verificacion.md](docs/checklists/verificacion.md)` · `[docs/demo/](docs/demo/)`                              |
+| 6 · Code review con agentes        | Un segundo agente sin el contexto del primero, veredicto de alineación                             | skill `ak-code-review` · `[docs/workflows/code-review.md](docs/workflows/code-review.md)` · `[prompts/code-review.md](prompts/code-review.md)`                                                     |
+| 7 · Cerrar el loop                 | La PR con contrato, veredicto y evidencia; los 20 minutos de quien revisa                          | skill `ak-pr-review` · `[.github/PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md)` · `[docs/workflows/pr-review.md](docs/workflows/pr-review.md)`                                       |
+| 8 · Tu turno                       | Diez issues reales para reproducir el ciclo sin seguir al instructor                               | `[docs/issues/](docs/issues/)`                                                                                                                                                                     |
+
 
 La feature que se construye en el workshop es el
 [Issue 00, Descuento por factura](docs/issues/00-invoice-discount-demo.md).
@@ -128,19 +136,23 @@ curl -s -X POST localhost:3000/facturas -H 'content-type: application/json' \
 curl -s -X POST localhost:3000/facturas/<id>/emitir
 ```
 
+
+
 ## El harness
 
-| Qué | Comando | Cuándo |
-|---|---|---|
-| Tipos | `pnpm typecheck` | después de cada cambio |
-| Lint | `pnpm lint` | después de cada cambio |
-| Tests unitarios | `pnpm test:unit` | después de cada cambio |
-| Build | `pnpm build` | antes de la PR |
-| Tests completos | `pnpm test` | antes de la PR |
-| Smoke | `pnpm smoke` | antes de la PR |
-| **Veredicto** | `pnpm verdict specs/<slug>/spec.md` | antes de la PR |
 
-Todo está en [`AGENTS.md`](AGENTS.md), que es el contrato permanente del repo.
+| Qué             | Comando                             | Cuándo                 |
+| --------------- | ----------------------------------- | ---------------------- |
+| Tipos           | `pnpm typecheck`                    | después de cada cambio |
+| Lint            | `pnpm lint`                         | después de cada cambio |
+| Tests unitarios | `pnpm test:unit`                    | después de cada cambio |
+| Build           | `pnpm build`                        | antes de la PR         |
+| Tests completos | `pnpm test`                         | antes de la PR         |
+| Smoke           | `pnpm smoke`                        | antes de la PR         |
+| **Veredicto**   | `pnpm verdict specs/<slug>/spec.md` | antes de la PR         |
+
+
+Todo está en `[AGENTS.md](AGENTS.md)`, que es el contrato permanente del repo.
 Claude Code lo lee a través de `CLAUDE.md`; Codex, Cursor, Gemini CLI y el
 resto lo leen directamente.
 
@@ -149,7 +161,7 @@ resto lo leen directamente.
 El sistema no depende de la herramienta. En las demos se usa Claude Code
 porque las skills de `.claude/skills/` cargan solas; para Codex, Cursor,
 Gemini CLI o cualquier agente con acceso al repo, los mismos flujos están en
-[`prompts/`](prompts/README.md) como texto para pegar.
+`[prompts/](prompts/README.md)` como texto para pegar.
 
 ## Mapa del repositorio
 
@@ -173,7 +185,7 @@ scripts/
 .claude/
   settings.json                hook PreToolUse -> guard-boundaries
   hooks/guard-boundaries.mjs   el carril impedido: bloquea escrituras en los límites
-  skills/                      contrato, veredicto, revision-codigo, revision-pr, harness-init, sdd-creator
+  skills/                      ak-contract, ak-verdict, ak-code-review, ak-pr-review, ak-harness-init, ak-sdd-creator
 prompts/                       los mismos flujos como prompt suelto, para Codex / Cursor / Gemini CLI
 docs/
   issues/                      10 issues para practicar (Módulo 8) + el Issue 00 de la demo
@@ -187,10 +199,12 @@ docs/
   workflows/ci.yml             el bucle largo, en cada PR
 ```
 
+
+
 ## Practicar: los 10 issues
 
-Están en [`docs/issues/`](docs/issues/README.md). Elige uno, crea la spec con
-`specs/spec.template.md` (o con la skill `contrato`), abre la rama
+Están en `[docs/issues/](docs/issues/README.md)`. Elige uno, crea la spec con
+`specs/spec.template.md` (o con la skill `ak-contract`), abre la rama
 `feat/<slug>`, implementa con tu agente y cierra con `pnpm verdict`. Con `gh`
 instalado, `bash scripts/create-issues.sh` los publica como Issues reales en
 tu fork.
@@ -199,11 +213,13 @@ tu fork.
 
 Tres ficheros sin dependencias, solo Node:
 
-| Fichero | Qué hace |
-|---|---|
-| `scripts/verdict.mjs` + `scripts/lib/spec.mjs` | Lee `specs/<slug>/spec.md`, ejecuta cada criterio, comprueba el alcance contra `git diff` y detecta asserts existentes modificados |
-| `.claude/hooks/guard-boundaries.mjs` + `.claude/settings.json` | Bloquea escrituras en los límites de `AGENTS.md` salvo que la spec de la rama los autorice |
-| `specs/spec.template.md` | El formato de contrato que los dos anteriores entienden |
+
+| Fichero                                                        | Qué hace                                                                                                                           |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `scripts/verdict.mjs` + `scripts/lib/spec.mjs`                 | Lee `specs/<slug>/spec.md`, ejecuta cada criterio, comprueba el alcance contra `git diff` y detecta asserts existentes modificados |
+| `.claude/hooks/guard-boundaries.mjs` + `.claude/settings.json` | Bloquea escrituras en los límites de `AGENTS.md` salvo que la spec de la rama los autorice                                         |
+| `specs/spec.template.md`                                       | El formato de contrato que los dos anteriores entienden                                                                            |
+
 
 Cópialos, añade `"verdict": "node scripts/verdict.mjs"` a tus scripts y
 escribe tu `AGENTS.md` con `harness-init`. Lo único que el veredicto necesita
@@ -217,8 +233,8 @@ código de más es código sin contrato.
 
 ## Origen de las skills
 
-- `dominicode-sdd-creator`: [github.com/bezael/sdd-creator](https://github.com/bezael/sdd-creator). Aquí va empaquetada tal cual; la skill `contrato` es su adaptación al formato de spec de este repo.
-- `dominicode-harness-init`: la skill que audita un repo y genera su `AGENTS.md` con los comandos reales. Las demás (`contrato`, `veredicto`, `revision-codigo`, `revision-pr`) se escribieron para este workshop.
+- `ak-sdd-creator`: [github.com/bezael/sdd-creator](https://github.com/bezael/sdd-creator). Aquí va empaquetada tal cual; la skill `ak-contract` es su adaptación al formato de spec de este repo.
+- `ak-harness-init`: la skill que audita un repo y genera su `AGENTS.md` con los comandos reales. Las demás (`ak-contract`, `ak-verdict`, `ak-code-review`, `ak-pr-review`) se escribieron para este workshop.
 
 ---
 

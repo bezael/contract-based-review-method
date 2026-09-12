@@ -1,6 +1,6 @@
 ---
-name: contrato
-description: "Convierte un GitHub Issue (o una petición en prosa) en el contrato de la tarea: specs/<slug>/spec.md con criterios de aceptación que un comando puede rechazar y un alcance de modificación explícito. Úsala al empezar cualquier tarea de este repo, cuando el usuario diga 'contrato', 'spec', 'firma la spec', 'del issue a la spec' o pegue un issue. Es el Módulo 2 del workshop. Si la tarea no cabe en dos páginas, la divide o escala a dominicode-sdd-creator para plan y tasks."
+name: ak-contract
+description: "Convierte un GitHub Issue (o una petición en prosa) en el contrato de la tarea: specs/<slug>/spec.md con criterios de aceptación que un comando puede rechazar y un alcance de modificación explícito. Úsala al empezar cualquier tarea de este repo, cuando el usuario diga 'contrato', 'spec', 'firma la spec', 'del issue a la spec' o pegue un issue. Es el Módulo 2 del workshop. Si la tarea no cabe en dos páginas, la divide o escala a ak-sdd-creator para plan y tasks."
 ---
 
 # Contrato · del Issue a la spec ejecutable
@@ -52,7 +52,7 @@ cambios. Un contrato sin firma no autoriza nada.
 ### 5. Si no cabe en dos páginas
 
 Divide en dos o más specs con dependencia explícita, o, si la feature tiene
-varias entidades y flujos, usa `dominicode-sdd-creator` para producir además
+varias entidades y flujos, usa `ak-sdd-creator` para producir además
 `plan.md` y `tasks.md`. El contrato de este repo (criterios con comando +
 alcance) sigue siendo la fuente de verdad del veredicto.
 
