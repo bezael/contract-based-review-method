@@ -63,7 +63,7 @@ yesterday"*.
 
 1. **Contract on screen** (30 s). The criteria table of the spec. Read criterion
    4 and the scope out loud. "This is what I signed before it wrote a line."
-2. **The diff, without reading it** (20 s). `git diff --stat`. "Seven files, 100
+2. **The diff, without reading it** (20 s). `git diff --stat`. "Seven files, a hundred-odd
    lines. This is where my two hours used to start."
 3. **The verdict** (60 s). `pnpm verdict specs/invoice-discount/spec.md`. Wait
    for it to finish. Read the three red lines out loud.
