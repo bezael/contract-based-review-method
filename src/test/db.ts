@@ -3,11 +3,11 @@ import { join } from 'node:path'
 import { createDb, type Db } from '../lib/db.js'
 
 /**
- * Base de data SQLite en memoria con las migraciones aplicadas.
+ * In-memory SQLite database with every migration applied.
  *
- * Cada file de test crea la suya: aislamiento total y cero ficheros que
- * limpiar. Las migraciones se leen de prisma/migrations, así que los tests
- * prueban el mismo esquema que producción.
+ * Each test file creates its own: full isolation and no files to clean up.
+ * Migrations are read from prisma/migrations, so tests exercise the same
+ * schema as production.
  */
 export async function createTestDb(): Promise<Db> {
   const db = createDb(':memory:')
@@ -29,6 +29,6 @@ export async function createTestDb(): Promise<Db> {
   return db
 }
 
-export async function testCustomer(db: Db, rnc = '101010101') {
-  return db.customer.create({ data: { name: 'Test customer', taxId: rnc } })
+export async function testCustomer(db: Db, taxId = '101010101') {
+  return db.customer.create({ data: { name: 'Test customer', taxId } })
 }

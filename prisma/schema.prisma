@@ -1,9 +1,9 @@
-// Esquema de la API de facturación.
+// Schema of the invoicing API.
 //
-// Los importes se guardan SIEMPRE en céntimos (Int). Nunca Float.
-// Las fechas se guardan y se devuelven en UTC.
-// Los estados son strings acotados desde src/services/invoices.ts, porque
-// SQLite no tiene enums.
+// Amounts are ALWAYS stored in cents (Int). Never Float.
+// Dates are stored and returned in UTC.
+// Statuses are strings constrained from src/services/invoices.ts, because
+// SQLite has no enums.
 
 generator client {
   provider = "prisma-client"

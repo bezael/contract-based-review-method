@@ -3,7 +3,7 @@ import { buildApp } from './app.js'
 import { createTestDb } from './test/db.js'
 
 describe('GET /health', () => {
-  it('responde ok', async () => {
+  it('responds ok', async () => {
     const app = buildApp({ db: await createTestDb() })
     const response = await app.inject({ method: 'GET', url: '/health' })
     expect(response.statusCode).toBe(200)

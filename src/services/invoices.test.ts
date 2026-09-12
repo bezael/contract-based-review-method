@@ -13,7 +13,7 @@ beforeEach(async () => {
 })
 
 describe('createInvoice', () => {
-  it('calcula subtotal, ITBIS y total en céntimos', async () => {
+  it('computes subtotal, tax and total in cents', async () => {
     const invoice = await createInvoice(db, {
       customerId,
       lines: [
@@ -31,26 +31,26 @@ describe('createInvoice', () => {
     expect(invoice.lines[0]?.totalCents).toBe(2500)
   })
 
-  it('falla si el cliente no existe', async () => {
+  it('fails when the customer does not exist', async () => {
     await expect(
       createInvoice(db, {
-        customerId: 'no-existe',
+        customerId: 'nothing',
         lines: [{ description: 'X', quantity: 1, unitPrice: '1.00' }],
       }),
-    ).rejects.toMatchObject({ errorCode: 'CLIENTE_NO_ENCONTRADO' })
+    ).rejects.toMatchObject({ errorCode: 'CUSTOMER_NOT_FOUND' })
   })
 })
 
 describe('getInvoice', () => {
-  it('lanza FACTURA_NO_ENCONTRADA si no existe', async () => {
-    await expect(getInvoice(db, 'nada')).rejects.toBeInstanceOf(AppError)
+  it('throws INVOICE_NOT_FOUND when it does not exist', async () => {
+    await expect(getInvoice(db, 'nothing')).rejects.toBeInstanceOf(AppError)
   })
 })
 
 describe('issueInvoice', () => {
   const lines = [{ description: 'Servicio', quantity: 1, unitPrice: '50.00' }]
 
-  it('pasa a ISSUED y asigna número correlativo por año', async () => {
+  it('moves to ISSUED and assigns a sequential number per year', async () => {
     const date = new Date('2026-03-10T15:00:00.000Z')
     const first = await createInvoice(db, { customerId, lines })
     const second = await createInvoice(db, { customerId, lines })
@@ -64,7 +64,7 @@ describe('issueInvoice', () => {
     expect(next.number).toBe('F-2026-0002')
   })
 
-  it('reinicia la numeración cada año', async () => {
+  it('resets numbering every year', async () => {
     const from2026 = await createInvoice(db, { customerId, lines })
     const from2027 = await createInvoice(db, { customerId, lines })
 

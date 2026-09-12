@@ -8,32 +8,32 @@ import {
 } from '../services/invoices.js'
 
 type CreateInvoiceRequest = {
-  clienteId: string
-  lineas: Array<{
-    descripcion: string
-    cantidad: number
-    precioUnitario: string
+  customerId: string
+  lines: Array<{
+    description: string
+    quantity: number
+    unitPrice: string
   }>
 }
 
 const newInvoiceSchema = {
   type: 'object',
-  required: ['clienteId', 'lineas'],
+  required: ['customerId', 'lines'],
   additionalProperties: false,
   properties: {
-    clienteId: { type: 'string', minLength: 1 },
-    lineas: {
+    customerId: { type: 'string', minLength: 1 },
+    lines: {
       type: 'array',
       minItems: 1,
       maxItems: 100,
       items: {
         type: 'object',
-        required: ['descripcion', 'cantidad', 'precioUnitario'],
+        required: ['description', 'quantity', 'unitPrice'],
         additionalProperties: false,
         properties: {
-          descripcion: { type: 'string', minLength: 1, maxLength: 200 },
-          cantidad: { type: 'integer', minimum: 1 },
-          precioUnitario: { type: 'string', pattern: '^\\d{1,12}(\\.\\d{1,2})?$' },
+          description: { type: 'string', minLength: 1, maxLength: 200 },
+          quantity: { type: 'integer', minimum: 1 },
+          unitPrice: { type: 'string', pattern: '^\\d{1,12}(\\.\\d{1,2})?$' },
         },
       },
     },
@@ -42,26 +42,22 @@ const newInvoiceSchema = {
 
 export const invoiceRoutes: FastifyPluginAsync<{ db: Db }> = async (app, { db }) => {
   app.post<{ Body: CreateInvoiceRequest }>(
-    '/facturas',
+    '/invoices',
     { schema: { body: newInvoiceSchema } },
     async (request, reply) => {
       const invoice = await createInvoice(db, {
-        customerId: request.body.clienteId,
-        lines: request.body.lineas.map((line) => ({
-          description: line.descripcion,
-          quantity: line.cantidad,
-          unitPrice: line.precioUnitario,
-        })),
+        customerId: request.body.customerId,
+        lines: request.body.lines,
       })
       return reply.status(201).send(toDto(invoice))
     },
   )
 
-  app.get<{ Params: { id: string } }>('/facturas/:id', async (request) => {
+  app.get<{ Params: { id: string } }>('/invoices/:id', async (request) => {
     return toDto(await getInvoice(db, request.params.id))
   })
 
-  app.post<{ Params: { id: string } }>('/facturas/:id/emitir', async (request) => {
+  app.post<{ Params: { id: string } }>('/invoices/:id/issue', async (request) => {
     return toDto(await issueInvoice(db, request.params.id))
   })
 }

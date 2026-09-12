@@ -2,20 +2,20 @@ import type { Db } from '../lib/db.js'
 import { AppError } from '../lib/errors.js'
 
 export type NewCustomer = {
-  nombre: string
-  rnc: string
+  name: string
+  taxId: string
   email?: string
 }
 
 export async function createCustomer(db: Db, data: NewCustomer) {
-  const existing = await db.customer.findUnique({ where: { taxId: data.rnc } })
+  const existing = await db.customer.findUnique({ where: { taxId: data.taxId } })
   if (existing) {
-    throw new AppError('RNC_DUPLICADO', `Ya existe un cliente con RNC ${data.rnc}`)
+    throw new AppError('DUPLICATE_RNC', `A customer with RNC ${data.taxId} already exists`)
   }
   return db.customer.create({
     data: {
-      name: data.nombre,
-      taxId: data.rnc,
+      name: data.name,
+      taxId: data.taxId,
       email: data.email ?? null,
     },
   })
@@ -24,7 +24,7 @@ export async function createCustomer(db: Db, data: NewCustomer) {
 export async function getCustomer(db: Db, id: string) {
   const customer = await db.customer.findUnique({ where: { id } })
   if (!customer) {
-    throw new AppError('CLIENTE_NO_ENCONTRADO', `No existe el cliente ${id}`)
+    throw new AppError('CUSTOMER_NOT_FOUND', `Customer ${id} not found`)
   }
   return customer
 }

@@ -3,11 +3,11 @@ import { buildApp } from '../app.js'
 import { testCustomer, createTestDb } from '../test/db.js'
 
 let app: ReturnType<typeof buildApp>
-let clienteId: string
+let customerId: string
 
 beforeEach(async () => {
   const db = await createTestDb()
-  clienteId = (await testCustomer(db)).id
+  customerId = (await testCustomer(db)).id
   app = buildApp({ db })
 })
 
@@ -16,77 +16,77 @@ afterEach(async () => {
 })
 
 const lines = [
-  { descripcion: 'Consultoría', cantidad: 2, precioUnitario: '12.50' },
-  { descripcion: 'Licencia', cantidad: 1, precioUnitario: '100.00' },
+  { description: 'Consultoría', quantity: 2, unitPrice: '12.50' },
+  { description: 'Licencia', quantity: 1, unitPrice: '100.00' },
 ]
 
-describe('POST /facturas', () => {
-  it('crea un borrador y devuelve los importes formateados', async () => {
+describe('POST /invoices', () => {
+  it('creates a draft and returns formatted amounts', async () => {
     const response = await app.inject({
       method: 'POST',
-      url: '/facturas',
-      payload: { clienteId, lineas: lines },
+      url: '/invoices',
+      payload: { customerId, lines },
     })
 
     expect(response.statusCode).toBe(201)
     expect(response.json()).toMatchObject({
-      estado: 'DRAFT',
-      numero: null,
+      status: 'DRAFT',
+      number: null,
       subtotal: '125.00',
-      impuesto: '22.50',
+      tax: '22.50',
       total: '147.50',
-      emitidaEn: null,
+      issuedAt: null,
     })
-    expect(response.json().lineas[0]).toMatchObject({ precioUnitario: '12.50', total: '25.00' })
+    expect(response.json().lines[0]).toMatchObject({ unitPrice: '12.50', total: '25.00' })
   })
 
-  it('rechaza una factura sin líneas con 400', async () => {
+  it('rejects an invoice with no lines with 400', async () => {
     const response = await app.inject({
       method: 'POST',
-      url: '/facturas',
-      payload: { clienteId, lineas: [] },
+      url: '/invoices',
+      payload: { customerId, lines: [] },
     })
 
     expect(response.statusCode).toBe(400)
-    expect(response.json().error).toBe('VALIDACION')
+    expect(response.json().error).toBe('VALIDATION')
   })
 
-  it('devuelve 404 si el cliente no existe', async () => {
+  it('returns 404 when the customer does not exist', async () => {
     const response = await app.inject({
       method: 'POST',
-      url: '/facturas',
-      payload: { clienteId: 'nada', lineas: lines },
+      url: '/invoices',
+      payload: { customerId: 'nothing', lines },
     })
 
     expect(response.statusCode).toBe(404)
-    expect(response.json().error).toBe('CLIENTE_NO_ENCONTRADO')
+    expect(response.json().error).toBe('CUSTOMER_NOT_FOUND')
   })
 })
 
-describe('GET /facturas/:id', () => {
-  it('devuelve la factura con sus líneas', async () => {
-    const created = await app.inject({ method: 'POST', url: '/facturas', payload: { clienteId, lineas: lines } })
-    const response = await app.inject({ method: 'GET', url: `/facturas/${created.json().id}` })
+describe('GET /invoices/:id', () => {
+  it('returns the invoice with its lines', async () => {
+    const created = await app.inject({ method: 'POST', url: '/invoices', payload: { customerId, lines } })
+    const response = await app.inject({ method: 'GET', url: `/invoices/${created.json().id}` })
 
     expect(response.statusCode).toBe(200)
-    expect(response.json().lineas).toHaveLength(2)
+    expect(response.json().lines).toHaveLength(2)
   })
 
-  it('devuelve 404 si no existe', async () => {
-    const response = await app.inject({ method: 'GET', url: '/facturas/nada' })
+  it('returns 404 when it does not exist', async () => {
+    const response = await app.inject({ method: 'GET', url: '/invoices/nothing' })
     expect(response.statusCode).toBe(404)
-    expect(response.json().error).toBe('FACTURA_NO_ENCONTRADA')
+    expect(response.json().error).toBe('INVOICE_NOT_FOUND')
   })
 })
 
-describe('POST /facturas/:id/emitir', () => {
-  it('emite el borrador y devuelve el número asignado', async () => {
-    const created = await app.inject({ method: 'POST', url: '/facturas', payload: { clienteId, lineas: lines } })
-    const response = await app.inject({ method: 'POST', url: `/facturas/${created.json().id}/emitir` })
+describe('POST /invoices/:id/issue', () => {
+  it('issues the draft and returns the assigned number', async () => {
+    const created = await app.inject({ method: 'POST', url: '/invoices', payload: { customerId, lines } })
+    const response = await app.inject({ method: 'POST', url: `/invoices/${created.json().id}/issue` })
 
     expect(response.statusCode).toBe(200)
-    expect(response.json().estado).toBe('ISSUED')
-    expect(response.json().numero).toMatch(/^F-\d{4}-0001$/)
-    expect(response.json().emitidaEn).toMatch(/Z$/)
+    expect(response.json().status).toBe('ISSUED')
+    expect(response.json().number).toMatch(/^F-\d{4}-0001$/)
+    expect(response.json().issuedAt).toMatch(/Z$/)
   })
 })

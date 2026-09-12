@@ -59,7 +59,7 @@ export async function createInvoice(db: Db, data: NewInvoice) {
 export async function getInvoice(db: Db, id: string) {
   const invoice = await db.invoice.findUnique({ where: { id }, include: withLines })
   if (!invoice) {
-    throw new AppError('INVOICE_NOT_FOUND', `Invoice ${id} not found`);
+    throw new AppError('INVOICE_NOT_FOUND', `Invoice ${id} not found`)
   }
   return invoice
 }
@@ -91,19 +91,19 @@ type InvoiceWithLines = Awaited<ReturnType<typeof getInvoice>>
 export function toDto(invoice: InvoiceWithLines) {
   return {
     id: invoice.id,
-    numero: invoice.number,
-    estado: invoice.status as Status,
-    clienteId: invoice.customerId,
+    number: invoice.number,
+    status: invoice.status as Status,
+    customerId: invoice.customerId,
     subtotal: formatMoney(invoice.subtotalCents),
-    impuesto: formatMoney(invoice.taxCents),
+    tax: formatMoney(invoice.taxCents),
     total: formatMoney(invoice.totalCents),
-    emitidaEn: invoice.issuedAt?.toISOString() ?? null,
-    creadoEn: invoice.createdAt.toISOString(),
-    lineas: invoice.lines.map((line: InvoiceWithLines['lines'][number]) => ({
+    issuedAt: invoice.issuedAt?.toISOString() ?? null,
+    createdAt: invoice.createdAt.toISOString(),
+    lines: invoice.lines.map((line: InvoiceWithLines['lines'][number]) => ({
       id: line.id,
-      descripcion: line.description,
-      cantidad: line.quantity,
-      precioUnitario: formatMoney(line.unitPriceCents),
+      description: line.description,
+      quantity: line.quantity,
+      unitPrice: formatMoney(line.unitPriceCents),
       total: formatMoney(line.totalCents),
     })),
   }

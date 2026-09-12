@@ -4,19 +4,19 @@ import { createCustomer, getCustomer, type NewCustomer } from '../services/custo
 
 const newCustomerSchema = {
   type: 'object',
-  required: ['nombre', 'rnc'],
+  required: ['name', 'taxId'],
   additionalProperties: false,
   properties: {
-    nombre: { type: 'string', minLength: 1, maxLength: 120 },
-    // RNC de empresa (9 dígitos) o cédula (11 dígitos).
-    rnc: { type: 'string', pattern: '^([0-9]{9}|[0-9]{11})$' },
+    name: { type: 'string', minLength: 1, maxLength: 120 },
+    // Company RNC (9 digits) or personal ID (11 digits).
+    taxId: { type: 'string', pattern: '^([0-9]{9}|[0-9]{11})$' },
     email: { type: 'string', format: 'email' },
   },
 } as const
 
 export const customerRoutes: FastifyPluginAsync<{ db: Db }> = async (app, { db }) => {
   app.post<{ Body: NewCustomer }>(
-    '/clientes',
+    '/customers',
     { schema: { body: newCustomerSchema } },
     async (request, reply) => {
       const customer = await createCustomer(db, request.body)
@@ -24,7 +24,7 @@ export const customerRoutes: FastifyPluginAsync<{ db: Db }> = async (app, { db }
     },
   )
 
-  app.get<{ Params: { id: string } }>('/clientes/:id', async (request) => {
+  app.get<{ Params: { id: string } }>('/customers/:id', async (request) => {
     return getCustomer(db, request.params.id)
   })
 }

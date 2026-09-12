@@ -12,44 +12,44 @@ afterEach(async () => {
   await app.close()
 })
 
-describe('POST /clientes', () => {
-  it('crea un cliente y devuelve 201', async () => {
+describe('POST /customers', () => {
+  it('creates a customer and returns 201', async () => {
     const response = await app.inject({
       method: 'POST',
-      url: '/clientes',
-      payload: { nombre: 'Operaciones SRL', rnc: '131234567', email: 'ops@ejemplo.do' },
+      url: '/customers',
+      payload: { name: 'Operaciones SRL', taxId: '131234567', email: 'ops@example.do' },
     })
 
     expect(response.statusCode).toBe(201)
-    expect(response.json()).toMatchObject({ nombre: 'Operaciones SRL', rnc: '131234567' })
+    expect(response.json()).toMatchObject({ name: 'Operaciones SRL', taxId: '131234567' })
     expect(response.json().id).toEqual(expect.any(String))
   })
 
-  it('devuelve 409 si el RNC ya existe', async () => {
-    const payload = { nombre: 'Uno', rnc: '131234567' }
-    await app.inject({ method: 'POST', url: '/clientes', payload })
-    const duplicate = await app.inject({ method: 'POST', url: '/clientes', payload })
+  it('returns 409 when the RNC already exists', async () => {
+    const payload = { name: 'Uno', taxId: '131234567' }
+    await app.inject({ method: 'POST', url: '/customers', payload })
+    const duplicate = await app.inject({ method: 'POST', url: '/customers', payload })
 
     expect(duplicate.statusCode).toBe(409)
-    expect(duplicate.json().error).toBe('RNC_DUPLICADO')
+    expect(duplicate.json().error).toBe('DUPLICATE_RNC')
   })
 
-  it('devuelve 400 si el cuerpo no cumple el esquema', async () => {
+  it('returns 400 when the body does not match the schema', async () => {
     const response = await app.inject({
       method: 'POST',
-      url: '/clientes',
-      payload: { nombre: 'Sin RNC' },
+      url: '/customers',
+      payload: { name: 'No tax id' },
     })
 
     expect(response.statusCode).toBe(400)
-    expect(response.json().error).toBe('VALIDACION')
+    expect(response.json().error).toBe('VALIDATION')
   })
 })
 
-describe('GET /clientes/:id', () => {
-  it('devuelve 404 si no existe', async () => {
-    const response = await app.inject({ method: 'GET', url: '/clientes/nada' })
+describe('GET /customers/:id', () => {
+  it('returns 404 when it does not exist', async () => {
+    const response = await app.inject({ method: 'GET', url: '/customers/nothing' })
     expect(response.statusCode).toBe(404)
-    expect(response.json().error).toBe('CLIENTE_NO_ENCONTRADO')
+    expect(response.json().error).toBe('CUSTOMER_NOT_FOUND')
   })
 })
