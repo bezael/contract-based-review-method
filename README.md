@@ -112,8 +112,8 @@ contrato y su veredicto escritos.
 Necesitas Node 24 y pnpm 10 o superior (`corepack enable` lo instala solo).
 
 ```bash
-git clone <url-del-repo> revision-por-contrato
-cd revision-por-contrato
+git clone <url-del-repo> contract-based-review-method
+cd contract-based-review-method
 pnpm install          # instala y genera el cliente de Prisma
 pnpm db:setup         # crea data/facturas.db y aplica las migraciones
 pnpm test             # 26 tests en verde

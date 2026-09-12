@@ -14,7 +14,7 @@ diff, que es exactamente lo que tendrá la persona que haga el merge.
 
 Reglas de independencia:
 
-- Sesión nueva o `context: fork` (la skill `revision-codigo` ya lo hace).
+- Sesión nueva o `context: fork` (la skill `ak-code-review` ya lo hace).
 - No lee el resumen del implementador. Lee `git diff main...HEAD`.
 - No se fía de "los tests pasan": ejecuta `pnpm verdict` y lo lee.
 

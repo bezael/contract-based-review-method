@@ -9,7 +9,7 @@ flowchart TB
         I[GitHub Issue<br/>docs/issues · .github/ISSUE_TEMPLATE]
         S[Spec firmada<br/>specs/slug/spec.md<br/>criterios con comando · alcance]
         A[AGENTS.md<br/>contrato permanente<br/>stack · verificación · convenciones · límites]
-        I -->|skill contrato · Módulo 2| S
+        I -->|skill ak-contract · Módulo 2| S
         A -.->|lo lee el agente| S
     end
 
@@ -34,7 +34,7 @@ flowchart TB
     end
 
     subgraph REVISION["REVISIÓN · Módulos 6 y 7"]
-        R[Segundo agente<br/>skill revision-codigo<br/>alineación: Exacto / Enredado / Incompleto]
+        R[Segundo agente<br/>skill ak-code-review<br/>alineación: Exacto / Enredado / Incompleto]
         F[Correcciones<br/>dentro del alcance]
         PR[Pull Request<br/>.github/PULL_REQUEST_TEMPLATE.md<br/>contrato · veredicto · harness · alcance]
         D[Decisión humana<br/>veredicto → contrato → diff apuntando<br/>20 minutos]
@@ -62,8 +62,8 @@ flowchart TB
 | 5 | Implementación | `prompts/scoped-implementation.md`, bucle corto | 4 |
 | 6 | Tests + Checks | `pnpm typecheck && pnpm lint && pnpm test` | 5 |
 | 7 | Veredicto | `pnpm verdict specs/<slug>/spec.md --write` | 5 |
-| 8 | Code Review | skill `revision-codigo` / `prompts/code-review.md` | 6 |
-| 9 | Pull Request | skill `revision-pr` / plantilla de PR | 7 |
+| 8 | Code Review | skill `ak-code-review` / `prompts/code-review.md` | 6 |
+| 9 | Pull Request | skill `ak-pr-review` / plantilla de PR | 7 |
 | 10 | Decisión humana | `docs/workflows/pr-review.md` | 7 |
 
 ## Cómo exportarlo

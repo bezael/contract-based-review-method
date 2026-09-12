@@ -13,7 +13,7 @@ Condiciones de entrada, todas:
 3. Revisión del segundo agente con alineación Exacto y sin críticos.
 4. Bucle largo en verde.
 
-Con eso, la skill `revision-pr` (o `prompts/pr-review.md`) rellena
+Con eso, la skill `ak-pr-review` (o `prompts/pr-review.md`) rellena
 `.github/PULL_REQUEST_TEMPLATE.md` con evidencia real y pregunta antes de
 `gh pr create`.
 
