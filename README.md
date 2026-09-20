@@ -150,6 +150,7 @@ curl -s -X POST localhost:3000/facturas/<id>/emitir
 | Tests completos | `pnpm test`                         | antes de la PR         |
 | Smoke           | `pnpm smoke`                        | antes de la PR         |
 | **Veredicto**   | `pnpm verdict specs/<slug>/spec.md` | antes de la PR         |
+| **Veredicto calibrado** *(bonus)* | `node harness/jev-gate/src/cli.ts <contrato> <diff>` | criterios que no tienen comando |
 
 
 Todo está en `[AGENTS.md](AGENTS.md)`, que es el contrato permanente del repo.
@@ -225,6 +226,36 @@ Cópialos, añade `"verdict": "node scripts/verdict.mjs"` a tus scripts y
 escribe tu `AGENTS.md` con `harness-init`. Lo único que el veredicto necesita
 es que cada criterio lleve un comando entre backticks y que la rama se llame
 como la carpeta de la spec.
+
+## Bonus — el veredicto calibrado con Jev
+
+`pnpm verdict` resuelve los criterios que **tienen un comando**: los ejecuta y
+mira si pasan. Queda un hueco: los criterios que ningún comando puede
+comprobar. *"¿El cambio respeta el carril del contrato?"* *"¿Esto hace solo lo
+que la spec pide?"*
+
+Ese hueco es lo que cubre `harness/jev-gate/`, con Jev — el modelo de
+decisiones tipadas de TypeSafe AI. No devuelve prosa: devuelve probabilidades
+calibradas, y sobre una probabilidad sí se escribe un `if`.
+
+```bash
+cd harness/jev-gate && npm install
+npm test                                     # 12 tests, sin red
+node src/cli.ts fixtures/contract.md fixtures/diff-fuera-de-carril.diff
+```
+
+Códigos de salida: `0` pasa · `1` revisión humana · `2` bloqueado. Medido
+contra `jev-1.13.0`: ~700 ms por veredicto completo, cinco preguntas en una
+sola request.
+
+Los dos fixtures dan resultados distintos a propósito. El segundo —un diff que
+**sí** respeta el contrato— sale a revisión humana, no a bloqueado: el modelo
+no está seguro, y eso es una respuesta legítima. Un gate que bloquea cambios
+buenos se desactiva en dos semanas.
+
+Está en `[harness/jev-gate/README.md](harness/jev-gate/README.md)`, con el
+workflow de GitHub Actions listo. Jev está en early access con waitlist; sin
+key, `--mock` usa una respuesta real grabada.
 
 ## Bugs que ya sabemos que hay
 

@@ -1,0 +1,14 @@
+{
+  "name": "jev-gate",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Nivel 4 del harness: veredicto calibrado sobre el contrato con Jev",
+  "scripts": {
+    "test": "node --test",
+    "typecheck": "tsc --noEmit",
+    "gate": "node src/cli.mjs"
+  },
+  "dependencies": { "@typesafe-ai/sdk": "^0.6.0" },
+  "devDependencies": { "typescript": "^5.6.0", "@types/node": "^22.0.0" }
+}
