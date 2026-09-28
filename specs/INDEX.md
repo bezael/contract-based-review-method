@@ -15,4 +15,4 @@ Una fila por contrato. El estado lo dicta la propia spec.
 
 | Slug | Qué | Estado | Issue |
 |---|---|---|---|
-| _(ninguna todavía)_ | | | |
+| `verdict-ansi-output` | The verdict reads Vitest results even when the output is colored (false FAIL outside agents) | signed | — · found in `invoice-discount` TASK-91 |
