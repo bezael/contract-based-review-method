@@ -16,3 +16,4 @@ Una fila por contrato. El estado lo dicta la propia spec.
 | Slug | Qué | Estado | Issue |
 |---|---|---|---|
 | `verdict-ansi-output` | The verdict reads Vitest results even when the output is colored (false FAIL outside agents) | signed | — · found in `invoice-discount` TASK-91 |
+| `verdict-git-color` | The verdict reads git diffs (`MODIFIED` asserts) and shows FAIL excerpts when color is forced on | signed | — · found reviewing `verdict.mjs` after `verdict-ansi-output` |

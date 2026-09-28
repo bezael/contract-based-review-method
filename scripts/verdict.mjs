@@ -59,10 +59,12 @@ const outOfScope = [...changedFiles].filter((file) => !matchesGlob(file, allowed
 const inScope = [...changedFiles].filter((file) => matchesGlob(file, allowedScope))
 
 // Existing assertions are part of the examination and must not be changed.
+// The diff is parsed by its line prefixes, so ask git for no color: with
+// color.ui=always every line would start with an escape code instead.
 function findModifiedAssertions() {
   const diffs = [
-    ...(base === 'HEAD' ? [] : runGit(`git diff --unified=0 ${base}...HEAD -- "*.test.ts"`)),
-    ...runGit('git diff --unified=0 HEAD -- "*.test.ts"'),
+    ...(base === 'HEAD' ? [] : runGit(`git diff --no-color --unified=0 ${base}...HEAD -- "*.test.ts"`)),
+    ...runGit('git diff --no-color --unified=0 HEAD -- "*.test.ts"'),
   ]
   const assertions = []
   let file = ''
@@ -89,12 +91,13 @@ if (!scopeOnly) {
     const commandResult = spawnSync(criterion.command, { shell: true, encoding: 'utf8', stdio: 'pipe' })
     const elapsedMs = Date.now() - startedAt
     const combinedOutput = `${commandResult.stdout ?? ''}${commandResult.stderr ?? ''}`
-    let output = combinedOutput.trim().split(/\r?\n/).slice(-12).join('\n')
+    // On Windows tools color piped output unless they detect an agent, so strip ANSI codes:
+    // the excerpt shown under a FAIL is read by agents and CI logs, not only by terminals.
+    const plainOutput = stripVTControlCharacters(combinedOutput)
+    let output = plainOutput.trim().split(/\r?\n/).slice(-12).join('\n')
     let status = commandResult.status === 0 ? 'PASS' : 'FAIL'
 
     // Vitest exits with 0 when a -t filter matches no tests. That is not a pass.
-    // On Windows it colors piped output unless it detects an agent, so strip ANSI codes first.
-    const plainOutput = stripVTControlCharacters(combinedOutput)
     if (status === 'PASS' && /vitest/.test(criterion.command) && !/Tests\s+\d+\s+passed/.test(plainOutput)) {
       status = 'FAIL'
       output = 'The command ran no tests: the -t filter matched no test name.'
