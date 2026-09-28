@@ -115,7 +115,7 @@ Necesitas Node 24 y pnpm 10 o superior (`corepack enable` lo instala solo).
 git clone <url-del-repo> contract-based-review-method
 cd contract-based-review-method
 pnpm install          # instala y genera el cliente de Prisma
-pnpm db:setup         # crea data/facturas.db y aplica las migraciones
+pnpm db:setup         # crea data/invoices.db y aplica las migraciones
 pnpm test             # 26 tests en verde
 pnpm dev              # http://localhost:3000/health
 ```
@@ -127,13 +127,13 @@ git, y si se queda desactualizado los tests fallan con "no such column".
 Prueba la API:
 
 ```bash
-curl -s -X POST localhost:3000/clientes -H 'content-type: application/json' \
-  -d '{"nombre":"Operaciones SRL","rnc":"131234567"}'
+curl -s -X POST localhost:3000/customers -H 'content-type: application/json' \
+  -d '{"name":"Operaciones SRL","taxId":"131234567"}'
 
-curl -s -X POST localhost:3000/facturas -H 'content-type: application/json' \
-  -d '{"clienteId":"<id>","lineas":[{"descripcion":"Consultoría","cantidad":2,"precioUnitario":"12.50"}]}'
+curl -s -X POST localhost:3000/invoices -H 'content-type: application/json' \
+  -d '{"customerId":"<id>","lines":[{"description":"Consultoría","quantity":2,"unitPrice":"12.50"}]}'
 
-curl -s -X POST localhost:3000/facturas/<id>/emitir
+curl -s -X POST localhost:3000/invoices/<id>/issue
 ```
 
 
@@ -175,7 +175,7 @@ specs/
 src/
   lib/money.ts                 céntimos, ITBIS, redondeo (está en los límites)
   lib/errors.ts                AppError y catálogo de códigos
-  services/                    lógica de dominio (clientes, facturas)
+  services/                    lógica de dominio (customers, invoices)
   routes/                      handlers Fastify con JSON Schema
   test/db.ts                   SQLite en memoria con las migraciones aplicadas
 scripts/
