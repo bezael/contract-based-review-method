@@ -109,7 +109,7 @@ contrato y su veredicto escritos.
 
 ## Arrancar en tres minutos
 
-Necesitas Node 24 y pnpm 10 o superior (`corepack enable` lo instala solo).
+Necesitas Node 24 y pnpm 11 (`corepack enable` instala la versión fijada en `package.json`).
 
 ```bash
 git clone <url-del-repo> contract-based-review-method
