@@ -12,6 +12,7 @@
 import { execSync, spawnSync } from 'node:child_process'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { relative } from 'node:path'
+import { stripVTControlCharacters } from 'node:util'
 import { matchesGlob, readSpec, normalizePath, currentBranch, activeSpecPath } from './lib/spec.mjs'
 
 const args = process.argv.slice(2)
@@ -92,7 +93,9 @@ if (!scopeOnly) {
     let status = commandResult.status === 0 ? 'PASS' : 'FAIL'
 
     // Vitest exits with 0 when a -t filter matches no tests. That is not a pass.
-    if (status === 'PASS' && /vitest/.test(criterion.command) && !/Tests\s+\d+\s+passed/.test(combinedOutput)) {
+    // On Windows it colors piped output unless it detects an agent, so strip ANSI codes first.
+    const plainOutput = stripVTControlCharacters(combinedOutput)
+    if (status === 'PASS' && /vitest/.test(criterion.command) && !/Tests\s+\d+\s+passed/.test(plainOutput)) {
       status = 'FAIL'
       output = 'The command ran no tests: the -t filter matched no test name.'
     }
