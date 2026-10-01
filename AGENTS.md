@@ -61,11 +61,8 @@ pnpm verdict:scope                      # scope only, running nothing
 
 ### Known reds
 
-`pnpm typecheck` is red on `main` as of September 6, 2026: two TS2345 errors in
-`src/services/customers.ts:13` and `:27`, which throw the codes `RNC_DUPLICADO`
-and `CLIENTE_NO_ENCONTRADO` after the `ERROR_CODES` catalog was renamed to
-English keys. The rest of the harness is green. Anything else that fails, you
-broke it.
+None. As of September 28, 2026 the whole harness is green on `main`: typecheck,
+lint, build, the 26 tests and the smoke test. Anything that fails, you broke it.
 
 ## Conventions
 
@@ -78,7 +75,7 @@ Detected by reading the code, not imposed from outside:
 - Tests live next to the file they test, as `*.test.ts`. Each file creates its own in-memory SQLite with `createTestDb()`; they share no state.
 - Dates are stored and returned in UTC, ISO 8601.
 - Input validation is JSON Schema in the route (`schema.body`). The service assumes the shape is valid and validates the domain.
-- The code is English (`buildApp`, `createInvoice`, `issueInvoice`). The public API stays Spanish: paths (`/clientes`, `/facturas/:id/emitir`), JSON fields (`nombre`, `rnc`, `numero`, `estado`, `lineas`) and error codes. `toDto()` in `src/services/invoices.ts` is where the two meet.
+- Everything is English, including the public API: paths (`/customers`, `/invoices/:id/issue`), JSON fields (`name`, `taxId`, `number`, `status`, `lines`) and error codes (`INVOICE_NOT_FOUND`, `DUPLICATE_RNC`). `toDto()` in `src/services/invoices.ts` shapes the invoice output.
 
 ## Boundaries
 
