@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import type { Db } from '../lib/db.js'
 import { AppError } from '../lib/errors.js'
 import { testCustomer, createTestDb } from '../test/db.js'
-import { createInvoice, issueInvoice, getInvoice } from './invoices.js'
+import { createInvoice, issueInvoice, getInvoice, toDto } from './invoices.js'
 
 let db: Db
 let customerId: string
@@ -52,6 +52,27 @@ describe('createInvoice', () => {
     expect(invoice.discountCents).toBe(1000)
     expect(invoice.taxCents).toBe(1620)
     expect(invoice.totalCents).toBe(10620)
+  })
+
+  it('taxes only the taxable cents and rounds the remainder into the exempt base', async () => {
+    const invoice = await createInvoice(db, {
+      customerId,
+      discountPct: 10,
+      lines: [
+        { description: 'Exenta', quantity: 1, unitPrice: '0.05', taxExempt: true },
+        { description: 'Gravada', quantity: 1, unitPrice: '0.05' },
+      ],
+    })
+
+    expect(invoice.lines.map((line) => line.taxExempt)).toEqual([true, false])
+    expect(invoice.subtotalCents).toBe(10)
+    expect(invoice.discountCents).toBe(1)
+    expect(invoice.taxCents).toBe(1)
+    expect(invoice.totalCents).toBe(10)
+
+    const dto = toDto(invoice)
+    expect(dto.taxableBase).toBe('0.04')
+    expect(dto.exemptBase).toBe('0.05')
   })
 })
 
