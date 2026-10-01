@@ -20,6 +20,11 @@ const lines = [
   { description: 'Licencia', quantity: 1, unitPrice: '100.00' },
 ]
 
+const mixedLines = [
+  { description: 'Libro', quantity: 1, unitPrice: '100.00', taxExempt: true },
+  { description: 'Licencia', quantity: 1, unitPrice: '100.00', taxExempt: false },
+]
+
 describe('POST /invoices', () => {
   it('creates a draft and returns formatted amounts', async () => {
     const response = await app.inject({
@@ -136,6 +141,113 @@ describe('POST /invoices', () => {
     expect(response.statusCode).toBe(201)
     expect(response.json()).toMatchObject({ subtotal: '0.05', discount: '0.01' })
   })
+
+  it('taxes only the non-exempt lines', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/invoices',
+      payload: { customerId, lines: mixedLines },
+    })
+
+    expect(response.statusCode).toBe(201)
+    expect(response.json()).toMatchObject({
+      subtotal: '200.00',
+      taxableBase: '100.00',
+      exemptBase: '100.00',
+      tax: '18.00',
+      total: '218.00',
+    })
+    expect(response.json().lines.map((line: { taxExempt: boolean }) => line.taxExempt)).toEqual([
+      true,
+      false,
+    ])
+  })
+
+  it('defaults taxExempt to false when omitted', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/invoices',
+      payload: { customerId, lines },
+    })
+
+    expect(response.statusCode).toBe(201)
+    expect(response.json()).toMatchObject({
+      subtotal: '125.00',
+      taxableBase: '125.00',
+      exemptBase: '0.00',
+      tax: '22.50',
+      total: '147.50',
+    })
+    expect(response.json().lines.map((line: { taxExempt: boolean }) => line.taxExempt)).toEqual([
+      false,
+      false,
+    ])
+  })
+
+  it('rejects a non-boolean taxExempt with 400 VALIDATION', async () => {
+    const db = await createTestDb()
+    const ownCustomerId = (await testCustomer(db)).id
+    const ownApp = buildApp({ db })
+
+    try {
+      for (const taxExempt of ['yes', {}]) {
+        const response = await ownApp.inject({
+          method: 'POST',
+          url: '/invoices',
+          payload: {
+            customerId: ownCustomerId,
+            lines: [{ description: 'Licencia', quantity: 1, unitPrice: '100.00', taxExempt }],
+          },
+        })
+
+        expect(response.statusCode).toBe(400)
+        expect(response.json().error).toBe('VALIDATION')
+      }
+      expect(await db.invoice.count()).toBe(0)
+    } finally {
+      await ownApp.close()
+    }
+  })
+
+  it('charges no tax when every line is exempt', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/invoices',
+      payload: {
+        customerId,
+        lines: [
+          { description: 'Libro', quantity: 1, unitPrice: '100.00', taxExempt: true },
+          { description: 'Revista', quantity: 1, unitPrice: '25.00', taxExempt: true },
+        ],
+      },
+    })
+
+    expect(response.statusCode).toBe(201)
+    expect(response.json()).toMatchObject({
+      taxableBase: '0.00',
+      exemptBase: '125.00',
+      tax: '0.00',
+      total: '125.00',
+    })
+  })
+
+  it('spreads the discount over the taxable and exempt bases', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/invoices',
+      payload: { customerId, discountPct: 10, lines: mixedLines },
+    })
+
+    expect(response.statusCode).toBe(201)
+    expect(response.json()).toMatchObject({
+      subtotal: '200.00',
+      discount: '20.00',
+      taxableBase: '90.00',
+      exemptBase: '90.00',
+      tax: '16.20',
+      total: '196.20',
+    })
+  })
 })
 
 describe('GET /invoices/:id', () => {
@@ -161,6 +273,26 @@ describe('GET /invoices/:id', () => {
       expect(response.json()[field]).toBeDefined()
       expect(response.json()[field]).toEqual(created.json()[field])
     }
+  })
+
+  it('returns taxExempt and the bases on read', async () => {
+    const created = await app.inject({
+      method: 'POST',
+      url: '/invoices',
+      payload: { customerId, lines: mixedLines },
+    })
+    const response = await app.inject({ method: 'GET', url: `/invoices/${created.json().id}` })
+
+    expect(response.statusCode).toBe(200)
+    const fields = ['subtotal', 'taxableBase', 'exemptBase', 'tax', 'total'] as const
+    for (const field of fields) {
+      expect(response.json()[field]).toBeDefined()
+      expect(response.json()[field]).toEqual(created.json()[field])
+    }
+    expect(response.json().lines.map((line: { taxExempt: boolean }) => line.taxExempt)).toEqual([
+      true,
+      false,
+    ])
   })
 
   it('returns 404 when it does not exist', async () => {

@@ -19,6 +19,8 @@ export type InputLine = {
   quantity: number
   /** Decimal value with up to two digits: "1234.56". */
   unitPrice: string
+  /** Exempt lines are left out of the tax. Defaults to false. */
+  taxExempt?: boolean
 }
 
 export type NewInvoice = {
@@ -30,6 +32,25 @@ export type NewInvoice = {
 
 const withLines = { lines: true } as const
 
+type BaseLine = { totalCents: number; taxExempt: boolean }
+
+/**
+ * Splits the invoice into taxable and exempt bases, both net of discount.
+ * The taxable share of the discount is rounded on its own and the exempt base
+ * takes the remainder, so taxableCents + exemptCents = subtotal - discount.
+ * Bases are derived, not stored: createInvoice and toDto both go through here.
+ */
+function computeBases(lines: BaseLine[], discountBps: number) {
+  const subtotalCents = sum(...lines.map((line) => line.totalCents))
+  const discountCents = percentage(subtotalCents, discountBps)
+  const taxableGrossCents = sum(
+    ...lines.filter((line) => !line.taxExempt).map((line) => line.totalCents),
+  )
+  const taxableCents = taxableGrossCents - percentage(taxableGrossCents, discountBps)
+  const exemptCents = subtotalCents - discountCents - taxableCents
+  return { subtotalCents, discountCents, taxableCents, exemptCents }
+}
+
 export async function createInvoice(db: Db, data: NewInvoice) {
   await getCustomer(db, data.customerId)
 
@@ -40,14 +61,14 @@ export async function createInvoice(db: Db, data: NewInvoice) {
       quantity: line.quantity,
       unitPriceCents,
       totalCents: multiply(unitPriceCents, line.quantity),
+      taxExempt: line.taxExempt ?? false,
     }
   })
 
-  const subtotalCents = sum(...lines.map((line) => line.totalCents))
   const discountBps = (data.discountPct ?? 0) * 100
-  const discountCents = percentage(subtotalCents, discountBps)
+  const { subtotalCents, discountCents, taxableCents } = computeBases(lines, discountBps)
   const netCents = subtotalCents - discountCents
-  const taxCents = percentage(netCents, TAX_BPS)
+  const taxCents = percentage(taxableCents, TAX_BPS)
 
   return db.invoice.create({
     data: {
@@ -96,6 +117,7 @@ type InvoiceWithLines = Awaited<ReturnType<typeof getInvoice>>
 
 /** API output: amounts as decimal strings and dates in UTC ISO format. */
 export function toDto(invoice: InvoiceWithLines) {
+  const { taxableCents, exemptCents } = computeBases(invoice.lines, invoice.discountBps)
   return {
     id: invoice.id,
     number: invoice.number,
@@ -104,6 +126,8 @@ export function toDto(invoice: InvoiceWithLines) {
     subtotal: formatMoney(invoice.subtotalCents),
     discountPct: invoice.discountBps / 100,
     discount: formatMoney(invoice.discountCents),
+    taxableBase: formatMoney(taxableCents),
+    exemptBase: formatMoney(exemptCents),
     tax: formatMoney(invoice.taxCents),
     total: formatMoney(invoice.totalCents),
     issuedAt: invoice.issuedAt?.toISOString() ?? null,
@@ -114,6 +138,7 @@ export function toDto(invoice: InvoiceWithLines) {
       quantity: line.quantity,
       unitPrice: formatMoney(line.unitPriceCents),
       total: formatMoney(line.totalCents),
+      taxExempt: line.taxExempt,
     })),
   }
 }

@@ -47,4 +47,5 @@ model InvoiceLine {
   quantity       Int
   unitPriceCents Int
   totalCents     Int
+  taxExempt      Boolean @default(false)
 }

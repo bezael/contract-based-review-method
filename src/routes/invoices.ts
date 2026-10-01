@@ -13,6 +13,7 @@ type CreateInvoiceRequest = {
     description: string
     quantity: number
     unitPrice: string
+    taxExempt?: boolean
   }>
   discountPct?: number
 }
@@ -36,6 +37,7 @@ const newInvoiceSchema = {
           description: { type: 'string', minLength: 1, maxLength: 200 },
           quantity: { type: 'integer', minimum: 1 },
           unitPrice: { type: 'string', pattern: '^\\d{1,12}(\\.\\d{1,2})?$' },
+          taxExempt: { type: 'boolean' },
         },
       },
     },
