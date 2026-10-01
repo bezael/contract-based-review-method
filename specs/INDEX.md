@@ -16,4 +16,4 @@ Una fila por contrato. El estado lo dicta la propia spec.
 
 | Slug | Qué | Estado | Issue |
 |---|---|---|---|
-| `invoice-discount` | Descuento porcentual entero (0–100) al crear factura, aplicado antes del impuesto | borrador | [#2](https://github.com/bezael/contract-based-review-method/issues/2) |
+| `invoice-discount` | Descuento porcentual entero (0–100) al crear factura, aplicado antes del impuesto | firmada | [#2](https://github.com/bezael/contract-based-review-method/issues/2) |
