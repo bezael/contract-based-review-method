@@ -61,6 +61,81 @@ describe('POST /invoices', () => {
     expect(response.statusCode).toBe(404)
     expect(response.json().error).toBe('CUSTOMER_NOT_FOUND')
   })
+
+  it('applies discountPct to the subtotal before tax', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/invoices',
+      payload: {
+        customerId,
+        discountPct: 10,
+        lines: [{ description: 'Licencia', quantity: 1, unitPrice: '100.00' }],
+      },
+    })
+
+    expect(response.statusCode).toBe(201)
+    expect(response.json()).toMatchObject({
+      discountPct: 10,
+      discount: '10.00',
+      subtotal: '100.00',
+      tax: '16.20',
+      total: '106.20',
+    })
+  })
+
+  it('defaults discountPct to 0 when omitted', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/invoices',
+      payload: { customerId, lines },
+    })
+
+    expect(response.statusCode).toBe(201)
+    expect(response.json()).toMatchObject({
+      discountPct: 0,
+      discount: '0.00',
+      subtotal: '125.00',
+      tax: '22.50',
+      total: '147.50',
+    })
+  })
+
+  it('rejects discountPct 101, -1 and 12.5 with 400 VALIDATION', async () => {
+    const db = await createTestDb()
+    const ownCustomerId = (await testCustomer(db)).id
+    const ownApp = buildApp({ db })
+
+    try {
+      for (const discountPct of [101, -1, 12.5]) {
+        const response = await ownApp.inject({
+          method: 'POST',
+          url: '/invoices',
+          payload: { customerId: ownCustomerId, discountPct, lines },
+        })
+
+        expect(response.statusCode).toBe(400)
+        expect(response.json().error).toBe('VALIDATION')
+      }
+      expect(await db.invoice.count()).toBe(0)
+    } finally {
+      await ownApp.close()
+    }
+  })
+
+  it('rounds the discount half up', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/invoices',
+      payload: {
+        customerId,
+        discountPct: 10,
+        lines: [{ description: 'Tornillo', quantity: 1, unitPrice: '0.05' }],
+      },
+    })
+
+    expect(response.statusCode).toBe(201)
+    expect(response.json()).toMatchObject({ subtotal: '0.05', discount: '0.01' })
+  })
 })
 
 describe('GET /invoices/:id', () => {
@@ -70,6 +145,22 @@ describe('GET /invoices/:id', () => {
 
     expect(response.statusCode).toBe(200)
     expect(response.json().lines).toHaveLength(2)
+  })
+
+  it('returns the same discount fields as creation', async () => {
+    const created = await app.inject({
+      method: 'POST',
+      url: '/invoices',
+      payload: { customerId, discountPct: 10, lines },
+    })
+    const response = await app.inject({ method: 'GET', url: `/invoices/${created.json().id}` })
+
+    expect(response.statusCode).toBe(200)
+    const fields = ['discountPct', 'discount', 'subtotal', 'tax', 'total'] as const
+    for (const field of fields) {
+      expect(response.json()[field]).toBeDefined()
+      expect(response.json()[field]).toEqual(created.json()[field])
+    }
   })
 
   it('returns 404 when it does not exist', async () => {

@@ -39,6 +39,20 @@ describe('createInvoice', () => {
       }),
     ).rejects.toMatchObject({ errorCode: 'CUSTOMER_NOT_FOUND' })
   })
+
+  it('stores the discount in cents before tax', async () => {
+    const invoice = await createInvoice(db, {
+      customerId,
+      discountPct: 10,
+      lines: [{ description: 'Licencia', quantity: 1, unitPrice: '100.00' }],
+    })
+
+    expect(invoice.subtotalCents).toBe(10000)
+    expect(invoice.discountBps).toBe(1000)
+    expect(invoice.discountCents).toBe(1000)
+    expect(invoice.taxCents).toBe(1620)
+    expect(invoice.totalCents).toBe(10620)
+  })
 })
 
 describe('getInvoice', () => {

@@ -32,6 +32,8 @@ model Invoice {
   subtotalCents Int
   taxCents     Int
   totalCents   Int
+  discountBps   Int         @default(0)
+  discountCents Int         @default(0)
   issuedAt     DateTime?
   createdAt    DateTime      @default(now())
   lines        InvoiceLine[]

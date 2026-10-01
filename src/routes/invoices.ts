@@ -14,6 +14,7 @@ type CreateInvoiceRequest = {
     quantity: number
     unitPrice: string
   }>
+  discountPct?: number
 }
 
 const newInvoiceSchema = {
@@ -22,6 +23,7 @@ const newInvoiceSchema = {
   additionalProperties: false,
   properties: {
     customerId: { type: 'string', minLength: 1 },
+    discountPct: { type: 'integer', minimum: 0, maximum: 100 },
     lines: {
       type: 'array',
       minItems: 1,
@@ -48,6 +50,7 @@ export const invoiceRoutes: FastifyPluginAsync<{ db: Db }> = async (app, { db })
       const invoice = await createInvoice(db, {
         customerId: request.body.customerId,
         lines: request.body.lines,
+        discountPct: request.body.discountPct ?? 0,
       })
       return reply.status(201).send(toDto(invoice))
     },
