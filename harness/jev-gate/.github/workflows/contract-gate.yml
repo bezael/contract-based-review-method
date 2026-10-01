@@ -1,0 +1,53 @@
+name: Contract Gate
+
+# El nivel 4 del harness. Corre DESPUÉS de build, tipos, tests y lint:
+# si los niveles 1-3 están en rojo, este gate no aporta nada.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  contract-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '24' }
+
+      - run: npm ci
+
+      - name: Recortar el diff
+        # El estado sucio le baja la puntería al modelo: solo el diff, sin
+        # lockfiles ni ficheros generados.
+        run: |
+          git diff origin/${{ github.base_ref }}...HEAD \
+            -- . ':(exclude)package-lock.json' ':(exclude)**/dist/**' \
+            > /tmp/pr.diff
+          wc -c /tmp/pr.diff
+
+      - name: Veredicto sobre el contrato
+        id: gate
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        # 0 pasa · 1 revisión humana · 2 bloqueado
+        run: |
+          set +e
+          node src/cli.ts CONTRACT.md /tmp/pr.diff | tee /tmp/gate.txt
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Comentar el veredicto en el PR
+        if: always()
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          { echo '## Contract Gate'; echo; echo '```'; cat /tmp/gate.txt; echo '```'; } \
+            | gh pr comment ${{ github.event.number }} --body-file -
+
+      - name: Aplicar la política
+        run: |
+          case "${{ steps.gate.outputs.code }}" in
+            0) echo "Dentro del contrato." ;;
+            1) echo "::warning::Necesita revisión humana." ;;
+            *) echo "::error::Fuera del contrato."; exit 1 ;;
+          esac

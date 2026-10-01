@@ -1,0 +1,245 @@
+diff --git a/prisma/migrations/20260912120000_invoice_discount/migration.sql b/prisma/migrations/20260912120000_invoice_discount/migration.sql
+new file mode 100644
+index 0000000..77e7dae
+--- /dev/null
++++ b/prisma/migrations/20260912120000_invoice_discount/migration.sql
+@@ -0,0 +1,4 @@
++-- AlterTable: per-invoice discount, applied to the subtotal before tax.
++-- Both columns default to 0, so existing invoices keep their totals.
++ALTER TABLE "Invoice" ADD COLUMN "discountBps" INTEGER NOT NULL DEFAULT 0;
++ALTER TABLE "Invoice" ADD COLUMN "discountCents" INTEGER NOT NULL DEFAULT 0;
+diff --git a/prisma/schema.prisma b/prisma/schema.prisma
+index 4fb1696..ff19812 100644
+--- a/prisma/schema.prisma
++++ b/prisma/schema.prisma
+@@ -30,6 +30,8 @@ model Invoice {
+   customerId   String
+   customer     Customer      @relation(fields: [customerId], references: [id])
+   subtotalCents Int
++  discountBps  Int           @default(0)
++  discountCents Int          @default(0)
+   taxCents     Int
+   totalCents   Int
+   issuedAt     DateTime?
+diff --git a/src/lib/money.ts b/src/lib/money.ts
+index d754c4e..674255a 100644
+--- a/src/lib/money.ts
++++ b/src/lib/money.ts
+@@ -40,6 +40,11 @@ export function percentage(cents: number, basisPoints: number): number {
+   return Math.floor((cents * basisPoints + 5_000) / 10_000)
+ }
+ 
++/** Discount amount for a percentage. */
++export function discount(cents: number, percent: number): number {
++  return Math.floor((cents * percent) / 100)
++}
++
+ export function sum(...amounts: number[]): number {
+   return amounts.reduce((accumulated, amount) => accumulated + amount, 0)
+ }
+diff --git a/src/routes/invoices.test.ts b/src/routes/invoices.test.ts
+index 31488f4..cd1b5c8 100644
+--- a/src/routes/invoices.test.ts
++++ b/src/routes/invoices.test.ts
+@@ -40,15 +40,66 @@ describe('POST /invoices', () => {
+     expect(response.json().lines[0]).toMatchObject({ unitPrice: '12.50', total: '25.00' })
+   })
+ 
+-  it('rejects an invoice with no lines with 400', async () => {
++  it('applies a 10 percent discount before tax', async () => {
++    const response = await app.inject({
++      method: 'POST',
++      url: '/invoices',
++      payload: {
++        customerId,
++        discountPct: 10,
++        lines: [{ description: 'Licencia', quantity: 1, unitPrice: '100.00' }],
++      },
++    })
++
++    expect(response.statusCode).toBe(201)
++    expect(response.json()).toMatchObject({
++      subtotal: '100.00',
++      discountPct: 10,
++      discount: '10.00',
++      tax: '16.20',
++      total: '106.20',
++    })
++  })
++
++  it('returns a zero discount when discountPct is absent', async () => {
++    const response = await app.inject({
++      method: 'POST',
++      url: '/invoices',
++      payload: { customerId, lines },
++    })
++
++    expect(response.statusCode).toBe(201)
++    expect(response.json()).toMatchObject({
++      discountPct: 0,
++      discount: '0.00',
++      subtotal: '125.00',
++      tax: '22.50',
++      total: '147.50',
++    })
++  })
++
++  it('rejects an invalid discountPct with 400', async () => {
++    for (const discountPct of [101, -1, 12.5]) {
++      const response = await app.inject({
++        method: 'POST',
++        url: '/invoices',
++        payload: { customerId, discountPct, lines },
++      })
++
++      expect(response.statusCode).toBe(400)
++      expect(response.json().error).toBe('VALIDATION')
++    }
++  })
++
++  it('accepts an invoice with no lines', async () => {
+     const response = await app.inject({
+       method: 'POST',
+       url: '/invoices',
+       payload: { customerId, lines: [] },
+     })
+ 
+-    expect(response.statusCode).toBe(400)
+-    expect(response.json().error).toBe('VALIDATION')
++    expect(response.statusCode).toBe(201)
++    expect(response.json().lines).toHaveLength(0)
+   })
+ 
+   it('returns 404 when the customer does not exist', async () => {
+@@ -72,6 +123,22 @@ describe('GET /invoices/:id', () => {
+     expect(response.json().lines).toHaveLength(2)
+   })
+ 
++  it('returns the discount fields', async () => {
++    const created = await app.inject({
++      method: 'POST',
++      url: '/invoices',
++      payload: {
++        customerId,
++        discountPct: 10,
++        lines: [{ description: 'Licencia', quantity: 1, unitPrice: '100.00' }],
++      },
++    })
++    const response = await app.inject({ method: 'GET', url: `/invoices/${created.json().id}` })
++
++    expect(response.statusCode).toBe(200)
++    expect(response.json()).toMatchObject({ discountPct: 10, discount: '10.00', total: '106.20' })
++  })
++
+   it('returns 404 when it does not exist', async () => {
+     const response = await app.inject({ method: 'GET', url: '/invoices/nothing' })
+     expect(response.statusCode).toBe(404)
+diff --git a/src/routes/invoices.ts b/src/routes/invoices.ts
+index 9e226ac..2e855f1 100644
+--- a/src/routes/invoices.ts
++++ b/src/routes/invoices.ts
+@@ -9,6 +9,7 @@ import {
+ 
+ type CreateInvoiceRequest = {
+   customerId: string
++  discountPct?: number
+   lines: Array<{
+     description: string
+     quantity: number
+@@ -22,9 +23,9 @@ const newInvoiceSchema = {
+   additionalProperties: false,
+   properties: {
+     customerId: { type: 'string', minLength: 1 },
++    discountPct: { type: 'integer', minimum: 0, maximum: 100 },
+     lines: {
+       type: 'array',
+-      minItems: 1,
+       maxItems: 100,
+       items: {
+         type: 'object',
+@@ -48,6 +49,8 @@ export const invoiceRoutes: FastifyPluginAsync<{ db: Db }> = async (app, { db })
+       const invoice = await createInvoice(db, {
+         customerId: request.body.customerId,
+         lines: request.body.lines,
++        // exactOptionalPropertyTypes: an absent discount is not the same as `undefined`.
++        ...(request.body.discountPct === undefined ? {} : { discountPct: request.body.discountPct }),
+       })
+       return reply.status(201).send(toDto(invoice))
+     },
+diff --git a/src/services/invoices.test.ts b/src/services/invoices.test.ts
+index 8cc71a1..f5494bd 100644
+--- a/src/services/invoices.test.ts
++++ b/src/services/invoices.test.ts
+@@ -31,6 +31,20 @@ describe('createInvoice', () => {
+     expect(invoice.lines[0]?.totalCents).toBe(2500)
+   })
+ 
++  it('rounds the discount half up', async () => {
++    const invoice = await createInvoice(db, {
++      customerId,
++      discountPct: 10,
++      lines: [{ description: 'Centavo', quantity: 1, unitPrice: '0.05' }],
++    })
++
++    expect(invoice.subtotalCents).toBe(5)
++    expect(invoice.discountBps).toBe(1000)
++    expect(invoice.discountCents).toBe(1)
++    expect(invoice.taxCents).toBe(1)
++    expect(invoice.totalCents).toBe(5)
++  })
++
+   it('fails when the customer does not exist', async () => {
+     await expect(
+       createInvoice(db, {
+diff --git a/src/services/invoices.ts b/src/services/invoices.ts
+index 5c150b8..e0894bc 100644
+--- a/src/services/invoices.ts
++++ b/src/services/invoices.ts
+@@ -3,6 +3,7 @@ import { AppError } from '../lib/errors.js'
+ import {
+   TAX_BPS,
+   toCents,
++  discount,
+   formatMoney,
+   multiply,
+   percentage,
+@@ -24,6 +25,8 @@ export type InputLine = {
+ export type NewInvoice = {
+   customerId: string
+   lines: InputLine[]
++  /** Integer from 0 to 100. Applied to the subtotal, before tax. */
++  discountPct?: number
+ }
+ 
+ const withLines = { lines: true } as const
+@@ -42,14 +45,19 @@ export async function createInvoice(db: Db, data: NewInvoice) {
+   })
+ 
+   const subtotalCents = sum(...lines.map((line) => line.totalCents))
+-  const taxCents = percentage(subtotalCents, TAX_BPS)
++  const discountBps = (data.discountPct ?? 0) * 100
++  const discountCents = discount(subtotalCents, data.discountPct ?? 0)
++  const baseCents = subtotalCents - discountCents
++  const taxCents = percentage(baseCents, TAX_BPS)
+ 
+   return db.invoice.create({
+     data: {
+       customerId: data.customerId,
+       subtotalCents,
++      discountBps,
++      discountCents,
+       taxCents,
+-      totalCents: subtotalCents + taxCents,
++      totalCents: baseCents + taxCents,
+       lines: { create: lines },
+     },
+     include: withLines,
+@@ -95,6 +103,8 @@ export function toDto(invoice: InvoiceWithLines) {
+     status: invoice.status as Status,
+     customerId: invoice.customerId,
+     subtotal: formatMoney(invoice.subtotalCents),
++    discountPct: invoice.discountBps / 100,
++    discount: formatMoney(invoice.discountCents),
+     tax: formatMoney(invoice.taxCents),
+     total: formatMoney(invoice.totalCents),
+     issuedAt: invoice.issuedAt?.toISOString() ?? null,

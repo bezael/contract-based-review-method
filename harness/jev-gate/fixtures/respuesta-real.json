@@ -1,0 +1,23 @@
+{
+  "_nota": "Respuesta literal de jev-1.13.0 el 2026-09-20 para fixtures/contract.md + fixtures/diff-fuera-de-carril.diff. No editar: es la evidencia de la forma real de la API.",
+  "model": "jev-1.13.0",
+  "answers": {
+    "staysInLane": { "type": "noul", "noul": 0.01 },
+    "meetsCriteria": { "type": "noul", "noul": 0.03 },
+    "breaksPublicApi": { "type": "noul", "noul": 0.97 },
+    "verdict": {
+      "type": "choice",
+      "choice": "reject",
+      "confidence": 0.94,
+      "probabilities": { "reject": 0.96, "revise": 0.04, "approve": 0 }
+    },
+    "risk": {
+      "type": "score",
+      "score": 3.88,
+      "confidence": 0.9,
+      "legend": { "0": "None", "1": "Low", "2": "Medium", "3": "High", "4": "Critical" },
+      "probabilities": { "0": 0, "1": 0, "2": 0, "3": 0.11, "4": 0.89 }
+    }
+  },
+  "usage": { "input_tokens": 831, "output_tokens": 115 }
+}

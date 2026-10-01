@@ -1,0 +1,56 @@
+$ node scripts/verdict.mjs
+
+VERDICT · Spec: Invoice discount
+Spec: specs/invoice-discount/spec.md · Branch: feat/invoice-discount · Base: main
+
+Acceptance criteria
+  1  PASS     2.5s    `POST /invoices` with `discountPct: 10` and subtotal 100.00 returns `discount: "10.00"`, `tax: "16.20"`, `total: "106.20"`
+  2  PASS     2.5s    Without `discountPct` it returns `discountPct: 0`, `discount: "0.00"` and the usual totals
+  3  PASS     2.7s    A `discountPct` of 101, -1 or 12.5 returns 400 VALIDATION
+  4  FAIL     2.3s    The discount amount rounds half up: 0.05 at 10 % discounts 0.01
+       ↳ pnpm vitest run src/services/invoices.test.ts -t "rounds the discount" (exit 1)
+         - 1
+         + 0
+         
+          ❯ src/services/invoices.test.ts:43:35
+              41|     expect(invoice.subtotalCents).toBe(5)
+              42|     expect(invoice.discountBps).toBe(1000)
+              43|     expect(invoice.discountCents).toBe(1)
+                |                                   ^
+              44|     expect(invoice.taxCents).toBe(1)
+              45|     expect(invoice.totalCents).toBe(5)
+         
+         ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+  5  PASS     3.3s    `GET /invoices/:id` returns the same discount fields
+  6  FAIL     5.4s    The existing suite stays green without touching its assertions
+       ↳ pnpm test (exit 1)
+         - 1
+         + 0
+         
+          ❯ src/services/invoices.test.ts:43:35
+              41|     expect(invoice.subtotalCents).toBe(5)
+              42|     expect(invoice.discountBps).toBe(1000)
+              43|     expect(invoice.discountCents).toBe(1)
+                |                                   ^
+              44|     expect(invoice.taxCents).toBe(1)
+              45|     expect(invoice.totalCents).toBe(5)
+         
+         ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+  7  PASS     6.1s    Types and lint with no new exceptions
+
+Scope (8 changed files)
+  IN_SCOPE      prisma/migrations/20260912120000_invoice_discount/migration.sql
+  IN_SCOPE      prisma/schema.prisma
+  IN_SCOPE      specs/invoice-discount/spec.md
+  IN_SCOPE      src/routes/invoices.test.ts
+  IN_SCOPE      src/routes/invoices.ts
+  IN_SCOPE      src/services/invoices.test.ts
+  IN_SCOPE      src/services/invoices.ts
+  OUT_OF_SCOPE  src/lib/money.ts ← not included in the spec scope
+
+Existing test assertions
+  MODIFIED  src/routes/invoices.test.ts: expect(response.statusCode).toBe(400)
+  MODIFIED  src/routes/invoices.test.ts: expect(response.json().error).toBe('VALIDATION')
+
+Result: FAIL · 2 failed criteria · 1 file out of scope · 2 existing assertions modified
+

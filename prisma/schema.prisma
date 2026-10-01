@@ -1,0 +1,48 @@
+// Schema of the invoicing API.
+//
+// Amounts are ALWAYS stored in cents (Int). Never Float.
+// Dates are stored and returned in UTC.
+// Statuses are strings constrained from src/services/invoices.ts, because
+// SQLite has no enums.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Customer {
+  id        String    @id @default(cuid())
+  name      String
+  taxId     String    @unique
+  email     String?
+  createdAt DateTime  @default(now())
+  invoices  Invoice[]
+}
+
+model Invoice {
+  id           String        @id @default(cuid())
+  number       String?       @unique
+  status       String        @default("DRAFT")
+  customerId   String
+  customer     Customer      @relation(fields: [customerId], references: [id])
+  subtotalCents Int
+  taxCents     Int
+  totalCents   Int
+  issuedAt     DateTime?
+  createdAt    DateTime      @default(now())
+  lines        InvoiceLine[]
+}
+
+model InvoiceLine {
+  id             String  @id @default(cuid())
+  invoiceId      String
+  invoice        Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description    String
+  quantity       Int
+  unitPriceCents Int
+  totalCents     Int
+}

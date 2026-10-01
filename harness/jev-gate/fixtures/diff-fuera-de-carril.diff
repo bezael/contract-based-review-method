@@ -1,0 +1,18 @@
+diff --git a/src/auth/login.ts b/src/auth/login.ts
+--- a/src/auth/login.ts
++++ b/src/auth/login.ts
+-export async function login(email: string, password: string): Promise<Session> {
++export async function login(email: string, password: string, ip: string): Promise<Session> {
++  await enforceRateLimit(email, ip)
+   return authenticate(email, password)
+ }
+
+diff --git a/src/db/schema.sql b/src/db/schema.sql
+--- a/src/db/schema.sql
++++ b/src/db/schema.sql
++ALTER TABLE users ADD COLUMN login_attempts INT DEFAULT 0;
+
+diff --git a/package.json b/package.json
+--- a/package.json
++++ b/package.json
++    "rate-limiter-flexible": "^5.0.0",

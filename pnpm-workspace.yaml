@@ -1,0 +1,26 @@
+packages:
+  - '.'
+
+# pnpm bloquea los scripts de instalación por defecto. Estos cuatro los
+# necesitamos: better-sqlite3 descarga su binario nativo, prisma descarga su
+# motor y esbuild su binario.
+#
+# El único better-sqlite3 del árbol es el 12.x que arrastra
+# @prisma/adapter-better-sqlite3. Su script de install es
+# `prebuild-install || node-gyp rebuild`: descarga el binario y sólo compila si
+# la descarga falla. Por eso este permiso no exige MSVC/Xcode a nadie.
+#
+# Ojo al añadir better-sqlite3 como dependencia directa otra vez: la 13.x no
+# trae script de install, así que pnpm le aplica el `node-gyp rebuild`
+# implícito de npm y rompe la instalación en toda máquina sin toolchain nativo.
+# Esta clave se indexa por nombre, no por versión: no se puede permitir una y
+# bloquear la otra.
+allowBuilds:
+  '@prisma/engines': true
+  better-sqlite3: true
+  esbuild: true
+  prisma: true
+
+minimumReleaseAgeExclude:
+  - fastify@5.12.3
+  - eslint@10.10.0
