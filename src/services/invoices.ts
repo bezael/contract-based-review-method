@@ -24,6 +24,8 @@ export type InputLine = {
 export type NewInvoice = {
   customerId: string
   lines: InputLine[]
+  /** Whole percentage from 0 to 100, taken off the subtotal before tax. */
+  discountPct?: number
 }
 
 const withLines = { lines: true } as const
@@ -42,14 +44,19 @@ export async function createInvoice(db: Db, data: NewInvoice) {
   })
 
   const subtotalCents = sum(...lines.map((line) => line.totalCents))
-  const taxCents = percentage(subtotalCents, TAX_BPS)
+  const discountBps = (data.discountPct ?? 0) * 100
+  const discountCents = percentage(subtotalCents, discountBps)
+  const netCents = subtotalCents - discountCents
+  const taxCents = percentage(netCents, TAX_BPS)
 
   return db.invoice.create({
     data: {
       customerId: data.customerId,
       subtotalCents,
+      discountBps,
+      discountCents,
       taxCents,
-      totalCents: subtotalCents + taxCents,
+      totalCents: netCents + taxCents,
       lines: { create: lines },
     },
     include: withLines,
@@ -95,6 +102,8 @@ export function toDto(invoice: InvoiceWithLines) {
     status: invoice.status as Status,
     customerId: invoice.customerId,
     subtotal: formatMoney(invoice.subtotalCents),
+    discountPct: invoice.discountBps / 100,
+    discount: formatMoney(invoice.discountCents),
     tax: formatMoney(invoice.taxCents),
     total: formatMoney(invoice.totalCents),
     issuedAt: invoice.issuedAt?.toISOString() ?? null,
